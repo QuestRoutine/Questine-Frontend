@@ -28,12 +28,13 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name='(tabs)' options={{ headerShown: false, title: '홈' }} />
+        <Stack.Screen name='settings' options={{ headerShown: true, title: '설정' }} />
+        <Stack.Screen name='+not-found' />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+      <StatusBar style='auto' />
+    </>
   );
 }

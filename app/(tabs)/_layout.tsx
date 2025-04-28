@@ -30,7 +30,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='Achievement'
+        name='Award'
         options={{
           title: '업적',
           tabBarActiveTintColor: 'hotpink',
