@@ -35,8 +35,8 @@ export default function HomeScreen() {
   // const colors = Colors[colorScheme ?? 'light'];
   const colors = Colors['light'];
 
-  const [selected, setSelected] = useState('');
   const today = new Date().toISOString().split('T')[0];
+  const [selected, setSelected] = useState(today);
   const [currentMonth, setCurrentMonth] = useState(today);
   const [todos, setTodos] = useState<Todo[]>([
     { id: '1', text: '오전 회의 참석하기', completed: false, date: '2025-05-01', expReward: 10 },
