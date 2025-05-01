@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Text, SafeAreaView, View, Pressable, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { CalendarList, DateData, LocaleConfig } from 'react-native-calendars';
+import { CalendarList, DateData } from 'react-native-calendars';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import Toast from 'react-native-toast-message';
+import { LinearGradient } from 'expo-linear-gradient';
+import '@/constants/Calendars';
 
 type MarkedDates = {
   [date: string]: {
@@ -17,7 +19,7 @@ type MarkedDates = {
   };
 };
 
-const COLORS = ['#FFB6C1', '#B5EAD7', '#C7CEEA', '#FFDAC1', '#E2F0CB'];
+const COLORS = ['#f9a8d4', '#fde68a', '#a3e635', '#7dd3fc', '#c4b5fd'];
 
 interface Todo {
   id: string;
@@ -86,15 +88,6 @@ export default function HomeScreen() {
 
     setMarkedDates(newMarkedDates);
   };
-
-  // 캘린더 로케일(kr) 설정
-  LocaleConfig.locales.kr = {
-    monthNames: ['01월', '02월', '03월', '04월', '05월', '06월', '07월', '08월', '09월', '10월', '11월', '12월'],
-    monthNamesShort: ['01월', '02월', '03월', '04월', '05월', '06월', '07월', '08월', '09월', '10월', '11월', '12월'],
-    dayNames: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'],
-    dayNamesShort: ['일', '월', '화', '수', '목', '금', '토'],
-  };
-  LocaleConfig.defaultLocale = 'kr';
 
   // 날짜 누를 시, 호출되는 함수
   const onDayPress = (day: DateData) => {
@@ -214,13 +207,6 @@ export default function HomeScreen() {
             backgroundColor: dots[0].color,
           };
         } else if (dots.length > 1) {
-          // 완료된 할일이 여러 개인 경우 분할 색상 효과 적용
-          // 그라데이션 대신 색상 분할 방식으로 구현
-          dayBackgroundStyle = {
-            backgroundColor: 'transparent', // 배경색 투명하게 설정
-            borderWidth: 0, // 기존 테두리 제거
-          };
-
           // 색상 분할을 위한 스타일 반환
           return (
             <Pressable
@@ -247,24 +233,16 @@ export default function HomeScreen() {
                 </Text>
               </View>
 
-              <View style={styles.splitColorContainer}>
-                {dots.map((dot: { color: string }, index: number) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.splitColorSection,
-                      {
-                        backgroundColor: dot.color,
-                        width: `${100 / dots.length}%`,
-                        left: `${(100 / dots.length) * index}%`,
-                      },
-                    ]}
-                  />
-                ))}
-
+              <LinearGradient
+                style={[styles.splitColorContainer, isSelected && styles.selectedTodoIndicator]}
+                colors={dots.slice(0, 5).map((dot: { color: string }) => dot.color)}
+                locations={dots.slice(0, 5).map((v: any, index: number) => index / (Math.min(dots.length, 5) - 1 || 1))}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+              >
                 {/* 미완료 할일 카운트가 있는 경우 표시 */}
                 {incompleteTodoCount > 0 && <Text style={styles.todoCountText}>{incompleteTodoCount}</Text>}
-              </View>
+              </LinearGradient>
             </Pressable>
           );
         }
@@ -440,6 +418,7 @@ const styles = StyleSheet.create({
   },
   selectedDayText: {
     fontWeight: 'bold',
+
     color: '#FFF',
   },
   todoIndicator: {
@@ -566,38 +545,19 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
   },
-  legendContainer: {
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  legendText: {
-    fontSize: 12,
-    marginBottom: 4,
-    color: '#888',
-  },
-  colorLegend: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  colorBox: {
-    width: 16,
-    height: 16,
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
   splitColorContainer: {
-    position: 'relative',
     height: 20,
     width: 20,
     borderRadius: 5,
     marginTop: 4,
-    overflow: 'hidden', // 분할된 색상이 컨테이너 영역을 벗어나지 않도록 설정
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
   },
   splitColorSection: {
     position: 'absolute',
     height: '100%',
+
     top: 0,
   },
   bottomPadding: {
