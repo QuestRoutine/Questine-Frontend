@@ -5,13 +5,13 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
+import Toast from 'react-native-toast-message';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -34,6 +34,8 @@ export default function RootLayout() {
         <Stack.Screen name='settings' options={{ headerShown: true, title: '설정' }} />
         <Stack.Screen name='+not-found' />
       </Stack>
+      {children}
+      <Toast />
       <StatusBar style='auto' />
     </>
   );

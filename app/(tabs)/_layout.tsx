@@ -1,9 +1,8 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
-import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { Award, House, UserCog } from 'lucide-react-native';
+import { Award, House, UserCog, User, Swords } from 'lucide-react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -37,7 +36,22 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Award size={20} color={color} />,
         }}
       />
-
+      <Tabs.Screen
+        name='Dungeon'
+        options={{
+          title: '던전',
+          tabBarActiveTintColor: 'hotpink',
+          tabBarIcon: ({ color }) => <Swords size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name='Character'
+        options={{
+          title: '캐릭터',
+          tabBarActiveTintColor: 'hotpink',
+          tabBarIcon: ({ color }) => <User size={20} color={color} />,
+        }}
+      />
       <Tabs.Screen
         name='Profile'
         options={{
