@@ -335,6 +335,8 @@ export default function HomeScreen() {
                 style={styles.todoInput}
                 value={newTodo}
                 onChangeText={setNewTodo}
+                onSubmitEditing={addTodo}
+                submitBehavior='submit'
                 placeholder='새로운 할 일을 입력하세요'
                 placeholderTextColor='#888'
               />
