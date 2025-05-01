@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import Toast from 'react-native-toast-message';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { View } from 'react-native';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -28,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <Stack>
         <Stack.Screen name='(tabs)' options={{ headerShown: false, title: '홈' }} />
         <Stack.Screen name='settings' options={{ headerShown: true, title: '설정' }} />
@@ -36,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </Stack>
       {children}
       <Toast />
-      <StatusBar style='auto' />
-    </>
+      <StatusBar style='dark' backgroundColor='transparent' translucent={true} />
+    </View>
   );
 }

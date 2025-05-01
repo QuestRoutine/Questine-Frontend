@@ -6,6 +6,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import Toast from 'react-native-toast-message';
 import { LinearGradient } from 'expo-linear-gradient';
 import '@/constants/Calendars';
+import { Check } from 'lucide-react-native';
 
 type MarkedDates = {
   [date: string]: {
@@ -206,6 +207,12 @@ export default function HomeScreen() {
           dayBackgroundStyle = {
             backgroundColor: dots[0].color,
           };
+
+          if (incompleteTodoCount === 0) {
+            todoCountText = <Check size={16} strokeWidth={3} />;
+          } else if (incompleteTodoCount > 0) {
+            todoCountText = <Text style={styles.todoCountText}>{incompleteTodoCount}</Text>;
+          }
         } else if (dots.length > 1) {
           // 색상 분할을 위한 스타일 반환
           return (
@@ -241,14 +248,18 @@ export default function HomeScreen() {
                 end={{ x: 0, y: 1 }}
               >
                 {/* 미완료 할일 카운트가 있는 경우 표시 */}
-                {incompleteTodoCount > 0 && <Text style={styles.todoCountText}>{incompleteTodoCount}</Text>}
+                {incompleteTodoCount === 0 ? (
+                  <Check size={16} strokeWidth={3} />
+                ) : (
+                  incompleteTodoCount > 0 && <Text style={styles.todoCountText}>{incompleteTodoCount}</Text>
+                )}
               </LinearGradient>
             </Pressable>
           );
         }
 
         // 미완료 할일이 있으면 카운트 표시
-        if (incompleteTodoCount > 0) {
+        if (incompleteTodoCount > 0 && !todoCountText) {
           todoCountText = <Text style={styles.todoCountText}>{incompleteTodoCount}</Text>;
         }
       } else {
@@ -431,7 +442,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedTodoIndicator: {
-    transform: [{ scale: 1.2 }],
+    transform: [{ scale: 1.1 }],
   },
   todoCountText: {
     fontSize: 12,
