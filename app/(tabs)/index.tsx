@@ -41,7 +41,7 @@ export default function HomeScreen() {
   const [todos, setTodos] = useState<Todo[]>([
     { id: '1', text: '오전 회의 참석하기', completed: false, date: '2025-05-01', expReward: 10 },
     { id: '2', text: '운동 30분 하기', completed: true, date: '2025-05-01', expReward: 5 },
-    { id: '3', text: '쇼핑몰 주문하기', completed: false, date: '2025-05-03', expReward: 5 },
+    { id: '3', text: '쇼핑몰 주문하기', completed: false, date: today, expReward: 5 },
   ]);
   const [newTodo, setNewTodo] = useState('');
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
@@ -112,34 +112,17 @@ export default function HomeScreen() {
   // 할 일 추가
   const addTodo = () => {
     if (newTodo.trim() && selected) {
+      const randomExpReward = Math.floor(Math.random() * 6) + 5;
       const newTodoItem: Todo = {
         id: Date.now().toString(),
         text: newTodo,
         completed: false,
         date: selected,
-        expReward: 0,
+        expReward: randomExpReward,
       };
       setTodos([...todos, newTodoItem]);
       setNewTodo('');
       console.log('할일추가');
-
-      updateMarkedDate(selected);
-    }
-  };
-
-  // 마킹된 날짜 업데이트
-  const updateMarkedDate = (date: string) => {
-    if (!markedDates[date]) {
-      const colorIndex = Math.floor(Math.random() * COLORS.length);
-      const selectedColor = COLORS[colorIndex];
-
-      setMarkedDates({
-        ...markedDates,
-        [date]: {
-          marked: true,
-          dots: [{ color: selectedColor }],
-        },
-      });
     }
   };
 
