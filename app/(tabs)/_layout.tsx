@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { router, Tabs, useFocusEffect } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -6,6 +6,9 @@ import { Award, House, UserCog, User, Swords } from 'lucide-react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  useFocusEffect(() => {
+    router.replace('/auth/Login');
+  });
 
   return (
     <Tabs
