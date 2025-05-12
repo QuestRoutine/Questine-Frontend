@@ -1,59 +1,50 @@
-import { useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
-import CustomInput from '@/components/CustomInput';
 import { QuestineColors } from '@/constants/Colors';
 import CustomButton from '@/components/CustomButton';
+import { FormProvider, useForm } from 'react-hook-form';
+import EmailInput from '@/components/input/EmailInput';
+import PasswordInput from '@/components/input/PasswordInput';
+import PasswordConfirmInput from '@/components/input/PasswordConfirmInput';
 
 export default function Register() {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [registerError, setRegisterError] = useState('');
+  type FormValues = {
+    email: string;
+    password: string;
+    passwordConfirm: string;
+  };
 
-  const handleRegister = () => {
-    if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
-      setRegisterError('모든 항목을 입력해주세요');
-      return;
-    }
+  const signupform = useForm<FormValues>({
+    defaultValues: {
+      email: '',
+      password: '',
+      passwordConfirm: '',
+    },
+  });
 
-    if (password !== confirmPassword) {
-      setRegisterError('비밀번호가 일치하지 않습니다');
-      return;
-    }
-
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setRegisterError('올바른 이메일 형식이 아닙니다');
-      return;
-    }
-
-    console.log('회원가입 시도:', { username, email, password });
-
-    router.push('/auth/Login');
+  const onSubmit = (formValues: FormValues) => {
+    console.log(formValues);
+    const { email, password, passwordConfirm } = signupform.getValues();
   };
 
   return (
-    <View style={styles.container}>
-      <CustomInput label='이메일' placeholder='이메일을 입력하세요' />
-      <CustomInput label='비밀번호' placeholder='비밀번호를 입력하세요' />
-      <CustomInput label='비밀번호 확인' placeholder='비밀번호를 다시 입력하세요' />
+    <FormProvider {...signupform}>
+      <View style={styles.container}>
+        <EmailInput />
+        <PasswordInput submitBehavior='submit' />
+        <PasswordConfirmInput />
+        <CustomButton label='회원가입' onPress={signupform.handleSubmit(onSubmit)} />
 
-      {registerError ? <Text>{registerError}</Text> : null}
-
-      <CustomButton label='회원가입' />
-
-      <View style={styles.loginLinkContainer}>
-        <Text style={styles.loginText}>이미 계정이 있으신가요?</Text>
-        <Pressable>
-          <Text style={styles.loginLink} onPress={() => router.navigate('/auth/Login')}>
-            로그인
-          </Text>
-        </Pressable>
+        <View style={styles.loginLinkContainer}>
+          <Text style={styles.loginText}>이미 계정이 있으신가요?</Text>
+          <Pressable>
+            <Text style={styles.loginLink} onPress={() => router.navigate('/auth/Login')}>
+              로그인
+            </Text>
+          </Pressable>
+        </View>
       </View>
-    </View>
+    </FormProvider>
   );
 }
 

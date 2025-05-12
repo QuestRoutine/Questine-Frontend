@@ -1,64 +1,65 @@
-import { useState } from 'react';
 import { StyleSheet, Text, View, Image, KeyboardAvoidingView, Platform, ScrollView, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import CustomButton from '@/components/CustomButton';
 import { QuestineColors } from '@/constants/Colors';
-import CustomInput from '@/components/CustomInput';
+import EmailInput from '@/components/input/EmailInput';
+import PasswordInput from '@/components/input/PasswordInput';
+import { FormProvider, useForm } from 'react-hook-form';
 
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
+  type FormValues = {
+    email: string;
+    password: string;
+    passwordConfirm: string;
+  };
 
-  const handleLogin = () => {
-    if (!username.trim() || !password.trim()) {
-      setLoginError('아이디와 비밀번호를 모두 입력해주세요');
-      return;
-    }
-    console.log({ username, password });
+  const signinForm = useForm<FormValues>({
+    defaultValues: {
+      email: '',
+      password: '',
+      passwordConfirm: '',
+    },
+  });
+
+  const handleRegister = () => {
     router.replace('/(tabs)');
+    router.push('/auth/Login');
+  };
+
+  const onSubmit = (formValues: FormValues) => {
+    console.log(formValues);
+    const { email, password, passwordConfirm } = signinForm.getValues();
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.logoContainer}>
-          <Image source={require('../../assets/images/Questine.png')} style={styles.logo} resizeMode='contain' />
-        </View>
-
-        <View style={styles.formContainer}>
-          <CustomInput
-            placeholder='아이디를 입력하세요'
-            label='이메일'
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize='none'
-          />
-
-          <CustomInput
-            label='비밀번호'
-            placeholder='비밀번호를 입력하세요'
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-
-          {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
-
-          <CustomButton label='로그인' onPress={handleLogin} />
-          <CustomButton label='카카오로 로그인' loginType='kakao' onPress={handleLogin} />
-
-          <View style={styles.registerLinkContainer}>
-            <Text style={styles.registerText}>아직 계정이 없으신가요?</Text>
-            <Pressable>
-              <Text style={styles.registerLink} onPress={() => router.push('/auth/Register')}>
-                회원가입
-              </Text>
-            </Pressable>
+    <FormProvider {...signinForm}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.logoContainer}>
+            <Image source={require('../../assets/images/Questine.png')} style={styles.logo} resizeMode='contain' />
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          <View style={styles.formContainer}>
+            <EmailInput />
+            <PasswordInput />
+
+            {/* {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null} */}
+
+            <CustomButton label='로그인' onPress={signinForm.handleSubmit(onSubmit)} />
+            <CustomButton label='카카오로 로그인' loginType='kakao' onPress={signinForm.handleSubmit(onSubmit)} />
+
+            <View style={styles.registerLinkContainer}>
+              <Text style={styles.registerText}>아직 계정이 없으신가요?</Text>
+              <Pressable>
+                <Text style={styles.registerLink} onPress={() => router.push('/auth/Register')}>
+                  회원가입
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </FormProvider>
   );
 }
 

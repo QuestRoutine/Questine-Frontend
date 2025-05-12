@@ -1,10 +1,23 @@
 import { QuestineColors } from '@/constants/Colors';
+import { ForwardedRef } from 'react';
 import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
 interface CustomInputProps extends TextInputProps {
   label?: string;
   variant?: 'filled' | 'standard' | 'outlined';
+  error?: string;
+  success?: boolean;
+  successMessage?: string;
+  ref?: ForwardedRef<TextInput>;
 }
-export default function CustomInput({ label, variant = 'filled', ...props }: CustomInputProps) {
+export default function CustomInput({
+  label,
+  variant = 'filled',
+  error,
+  success,
+  successMessage,
+  ref,
+  ...props
+}: CustomInputProps) {
   return (
     <View style={styles.wrapper}>
       {label && <Text style={styles.label}>{label}</Text>}
@@ -14,10 +27,13 @@ export default function CustomInput({ label, variant = 'filled', ...props }: Cus
           style={styles.input}
           autoCapitalize='none'
           spellCheck={false}
+          autoCorrect={false}
+          ref={ref}
           {...props}
         />
       </View>
-      {/* {Boolean(error) && <Text style={styles.error}>{error}</Text>} */}
+      {Boolean(error) && <Text style={styles.error}>{error}</Text>}
+      {Boolean(success) && <Text style={styles.success}>{successMessage}</Text>}
     </View>
   );
 }
@@ -64,6 +80,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
     color: QuestineColors.RED_500,
+  },
+  success: {
+    fontSize: 12,
+    marginTop: 5,
+    color: QuestineColors.GREEN_600,
   },
   inputError: {
     backgroundColor: QuestineColors.RED_100,

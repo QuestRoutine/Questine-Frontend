@@ -1,5 +1,5 @@
 import { QuestineColors } from '@/constants/Colors';
-import { View, Text, Pressable, StyleSheet, PressableProps } from 'react-native';
+import { Text, Pressable, StyleSheet, PressableProps } from 'react-native';
 
 interface CustomButtonProps extends PressableProps {
   label: string;
