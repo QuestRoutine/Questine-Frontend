@@ -6,14 +6,16 @@ import { FormProvider, useForm } from 'react-hook-form';
 import EmailInput from '@/components/input/EmailInput';
 import PasswordInput from '@/components/input/PasswordInput';
 import PasswordConfirmInput from '@/components/input/PasswordConfirmInput';
+import useAuth from '@/hooks/useAuth';
+
+type FormValues = {
+  email: string;
+  password: string;
+  passwordConfirm: string;
+};
 
 export default function Register() {
-  type FormValues = {
-    email: string;
-    password: string;
-    passwordConfirm: string;
-  };
-
+  const { signupMutation } = useAuth();
   const signupform = useForm<FormValues>({
     defaultValues: {
       email: '',
@@ -23,8 +25,11 @@ export default function Register() {
   });
 
   const onSubmit = (formValues: FormValues) => {
-    console.log(formValues);
-    const { email, password, passwordConfirm } = signupform.getValues();
+    const { email, password } = formValues;
+    signupMutation.mutate({
+      email,
+      password,
+    });
   };
 
   return (

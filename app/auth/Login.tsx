@@ -5,6 +5,7 @@ import { QuestineColors } from '@/constants/Colors';
 import EmailInput from '@/components/input/EmailInput';
 import PasswordInput from '@/components/input/PasswordInput';
 import { FormProvider, useForm } from 'react-hook-form';
+import useAuth from '@/hooks/useAuth';
 
 export default function Login() {
   type FormValues = {
@@ -21,14 +22,11 @@ export default function Login() {
     },
   });
 
-  const handleRegister = () => {
-    router.replace('/(tabs)');
-    router.push('/auth/Login');
-  };
+  const { signinMutation } = useAuth();
 
   const onSubmit = (formValues: FormValues) => {
-    console.log(formValues);
-    const { email, password, passwordConfirm } = signinForm.getValues();
+    const { email, password } = formValues;
+    signinMutation.mutate({ email, password });
   };
 
   return (

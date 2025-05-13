@@ -1,7 +1,7 @@
 import { Foundation } from '@expo/vector-icons';
 import { Link, Stack } from 'expo-router';
 import { StyleSheet } from 'react-native';
-export default function _layout() {
+export default function AuthLayout() {
   return (
     <Stack
       screenOptions={{
