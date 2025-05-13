@@ -13,8 +13,8 @@ export default function PasswordInput({
       control={control}
       rules={{
         validate: (data: string) => {
-          if (data.length < 8) {
-            return '비밀번호를 8자 이상 입력해주세요.';
+          if (!/^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(data)) {
+            return '비밀번호는 8자 이상, 영문자, 숫자, 특수문자를 포함해야 합니다.';
           }
         },
       }}

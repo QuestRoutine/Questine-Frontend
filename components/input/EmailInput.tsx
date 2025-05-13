@@ -11,7 +11,7 @@ export default function EmailInput() {
           if (!data) {
             return '이메일을 입력하세요.';
           }
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data)) {
+          if (!/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/.test(data)) {
             return '올바른 이메일 형식이 아닙니다.';
           }
           return true;
