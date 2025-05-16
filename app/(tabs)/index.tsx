@@ -7,6 +7,8 @@ import Toast from 'react-native-toast-message';
 import { LinearGradient } from 'expo-linear-gradient';
 import '@/constants/Calendars';
 import { Check } from 'lucide-react-native';
+import axiosInstance from '@/api/axios';
+import { getSecureStore } from '@/utils/secureStore';
 
 type MarkedDates = {
   [date: string]: {
@@ -23,11 +25,12 @@ type MarkedDates = {
 const COLORS = ['#f9a8d4', '#fde68a', '#a3e635', '#7dd3fc', '#c4b5fd'];
 
 interface Todo {
-  id: string;
-  text: string;
+  todo_id: number;
+  content: string;
   completed: boolean;
-  date: string;
-  expReward: number;
+  created_at: string;
+  exp_reward: number;
+  exp_shown?: boolean; // 경험치 토스트 메시지가 표시되었는지 여부를 저장
 }
 
 export default function HomeScreen() {
@@ -35,14 +38,10 @@ export default function HomeScreen() {
   // const colors = Colors[colorScheme ?? 'light'];
   const colors = Colors['light'];
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString();
   const [selected, setSelected] = useState(today);
   const [currentMonth, setCurrentMonth] = useState(today);
-  const [todos, setTodos] = useState<Todo[]>([
-    { id: '1', text: '오전 회의 참석하기', completed: false, date: '2025-05-01', expReward: 10 },
-    { id: '2', text: '운동 30분 하기', completed: true, date: '2025-05-01', expReward: 5 },
-    { id: '3', text: '쇼핑몰 주문하기', completed: false, date: today, expReward: 5 },
-  ]);
+  const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
 
@@ -51,32 +50,52 @@ export default function HomeScreen() {
     updateAllMarkedDates();
   }, [todos]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data } = await axiosInstance.get('/todo', {
+          headers: {
+            Authorization: `Bearer ${await getSecureStore('accessToken')}`,
+          },
+        });
+        const fetchedTodos: Todo[] = data.map((item: any) => ({
+          todo_id: item.todo_id,
+          content: item.content,
+          completed: item.completed,
+          created_at: item.created_at.split('T')[0],
+          exp_reward: item.exp_reward,
+          exp_shown: item.completed,
+        }));
+        setTodos(fetchedTodos);
+      } catch (error) {
+        console.error('할 일 목록 불러오기 실패:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
   // 모든 날짜의 마커를 할 일 목록에 맞게 업데이트
   const updateAllMarkedDates = () => {
     const newMarkedDates: MarkedDates = {};
 
-    // 중복 없이 모든 할 일 날짜 추출
-    const uniqueDates = [...new Set(todos.map((todo) => todo.date))];
+    // created_at을 YYYY-MM-DD로 변환하여 중복 없이 날짜 추출
+    const uniqueDates = [...new Set(todos.map((todo) => todo.created_at))];
 
     uniqueDates.forEach((date) => {
-      const dayTodos = todos.filter((todo) => todo.date === date);
+      const dayTodos = todos.filter((todo) => todo.created_at === date);
       const completedTodos = dayTodos.filter((todo) => todo.completed);
       const incompleteTodos = dayTodos.filter((todo) => !todo.completed);
 
       if (dayTodos.length === 0) {
-        // 할 일이 없는 경우 표시 안함
         return;
       } else if (completedTodos.length === 0) {
-        // 할 일은 있지만 모두 미완료인 경우
         newMarkedDates[date] = {
           marked: true,
           dots: [],
           todoCount: dayTodos.length,
         };
       } else {
-        // 완료된 할 일이 있는 경우
         const completedColors = completedTodos.map((_, index) => COLORS[index % COLORS.length]);
-
         newMarkedDates[date] = {
           marked: true,
           dots: completedColors.map((color) => ({ color })),
@@ -95,8 +114,8 @@ export default function HomeScreen() {
     // 이전에 선택된 날짜와 새로 선택된 날짜가 다른 경우에만 색상 변경
     if (selected !== day.dateString) {
       const selectedColor = COLORS[0];
-      console.log('onDayPress ', day.dateString);
       setSelected(day.dateString);
+      console.log('onDayPress ', day.dateString);
       console.log('날짜 선택됨:', day.dateString, '색상:', selectedColor);
     }
   };
@@ -110,19 +129,33 @@ export default function HomeScreen() {
   };
 
   // 할 일 추가
-  const addTodo = () => {
-    if (newTodo.trim() && selected) {
-      const randomExpReward = Math.floor(Math.random() * 6) + 5;
+  const addTodo = async () => {
+    if (!newTodo.trim() || !selected) return;
+    try {
+      const accessToken = await getSecureStore('accessToken');
+      console.log(selected + 'gㅇ');
+      const { data } = await axiosInstance.post(
+        '/todo',
+        {
+          content: newTodo,
+          created_at: new Date(selected).toISOString(),
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      console.log(new Date(selected).toISOString());
       const newTodoItem: Todo = {
-        id: Date.now().toString(),
-        text: newTodo,
-        completed: false,
-        date: selected,
-        expReward: randomExpReward,
+        todo_id: data.todo_id,
+        content: data.content,
+        completed: data.completed,
+        created_at: selected,
+        exp_reward: data.exp_reward,
       };
       setTodos([...todos, newTodoItem]);
       setNewTodo('');
-      console.log('할일추가');
+    } catch (error) {
+      console.error('할 일 추가 실패:', error);
     }
   };
 
@@ -135,37 +168,75 @@ export default function HomeScreen() {
   };
 
   // 할 일 완료 및 경험치 획득
-  const toggleTodoComplete = (id: string) => {
-    const todoToToggle = todos.find((todo) => todo.id === id);
-    const updatedTodos = todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo));
-    setTodos(updatedTodos);
+  const toggleTodoComplete = async (todo_id: number) => {
+    console.log('할 일 완료');
 
-    // 할 일을 완료한 경우
-    if (todoToToggle && !todoToToggle.completed) {
-      // 기본 경험치 획득
-      let earnedExp = todoToToggle.expReward;
+    const todoToToggle = todos.find((todo) => todo.todo_id === todo_id);
+    if (!todoToToggle) return;
 
-      // 완료 토스트
-      showToast(earnedExp);
+    const newCompleted = !todoToToggle.completed;
+
+    // 현재 할일의 경험치 표시 여부 확인
+    const hasShownExp = todoToToggle.exp_shown === true;
+
+    setTodos(
+      todos.map((todo) =>
+        todo.todo_id === todo_id
+          ? {
+              ...todo,
+              completed: newCompleted,
+              // 완료로 변경되고 아직 경험치 표시가 안됐을 때만 false로 유지, 그 외에는 true로 설정
+              exp_shown: newCompleted ? hasShownExp : true,
+            }
+          : todo
+      )
+    );
+
+    try {
+      const accessToken = await getSecureStore('accessToken');
+      if (newCompleted) {
+        // 완료 처리
+        const { data } = await axiosInstance.post(`/todo/done/${todo_id}`, null, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        console.log(data);
+
+        // 경험치를 받았고, 이전에 표시된 적이 없을 때만 토스트 메시지 표시
+        if (data.exp_given && !hasShownExp) {
+          showToast(data.exp);
+
+          // 경험치 표시 여부 업데이트
+          setTodos((prev) => prev.map((todo) => (todo.todo_id === todo_id ? { ...todo, exp_shown: true } : todo)));
+        }
+      } else {
+        // 미완료 처리
+        await axiosInstance.put(
+          `/todo/${todo_id}`,
+          { completed: newCompleted },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+      }
+    } catch (error) {
+      setTodos(todos);
+      console.error('할 일 완료 상태 변경 실패:', error);
     }
   };
 
   // 할 일 삭제
-  const deleteTodo = (id: string) => {
-    const updatedTodos = todos.filter((todo) => todo.id !== id);
-    setTodos(updatedTodos);
-
-    const selectedDateTodos = updatedTodos.filter((todo) => todo.date === selected);
-    if (selectedDateTodos.length === 0) {
-      const updatedMarkedDates = { ...markedDates };
-      if (updatedMarkedDates[selected]) {
-        delete updatedMarkedDates[selected];
-        setMarkedDates(updatedMarkedDates);
-      }
+  const deleteTodo = async (todo_id: number) => {
+    try {
+      const accessToken = await getSecureStore('accessToken');
+      console.log('할 일 삭제');
+      await axiosInstance.delete(`/todo/${todo_id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setTodos((prev) => prev.filter((todo) => todo.todo_id !== todo_id));
+    } catch (error) {
+      console.error('할 일 삭제 실패:', error);
     }
   };
 
-  const filteredTodos = todos.filter((todo) => todo.date === selected);
+  const filteredTodos = todos.filter((todo) => todo.created_at === selected);
 
   // custom day
   const dayComponent = ({ date, state, marking }: any) => {
@@ -322,6 +393,7 @@ export default function HomeScreen() {
                 submitBehavior='submit'
                 placeholder='새로운 할 일을 입력하세요'
                 placeholderTextColor='#888'
+                autoCapitalize='none'
               />
               <TouchableOpacity style={styles.addButton} onPress={addTodo}>
                 <Text style={styles.addButtonText}>추가</Text>
@@ -331,18 +403,17 @@ export default function HomeScreen() {
             <View style={styles.todoListContainer}>
               {filteredTodos.length > 0 ? (
                 filteredTodos.map((todo) => (
-                  <View key={todo.id} style={styles.todoItem}>
-                    {/* <Button title='Show toast' onPress={showToast} />; */}
+                  <View key={todo.todo_id} style={styles.todoItem}>
                     <TouchableOpacity
                       style={[styles.checkbox, todo.completed && styles.checkboxChecked]}
-                      onPress={() => toggleTodoComplete(todo.id)}
+                      onPress={() => toggleTodoComplete(todo.todo_id)}
                     >
                       {todo.completed && <Text style={styles.checkmark}>✓</Text>}
                     </TouchableOpacity>
                     <View style={styles.todoContent}>
-                      <Text style={[styles.todoText, todo.completed && styles.todoTextCompleted]}>{todo.text}</Text>
+                      <Text style={[styles.todoText, todo.completed && styles.todoTextCompleted]}>{todo.content}</Text>
                     </View>
-                    <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTodo(todo.id)}>
+                    <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTodo(todo.todo_id)}>
                       <Text style={styles.deleteButtonText}>×</Text>
                     </TouchableOpacity>
                   </View>

@@ -42,8 +42,9 @@ function useSignin() {
       console.log('로그인 성공');
       setHeader('Authorization', `Bearer ${accessToken}`);
       await setSecureStore('accessToken', accessToken);
-      // await setSecureStore('refreshToken', refreshToken);
-      queryClient.fetchQuery({ queryKey: ['getMe'] });
+      await setSecureStore('refreshToken', refreshToken);
+
+      await queryClient.fetchQuery({ queryKey: ['getMe'], queryFn: getMe });
       router.replace('/(tabs)');
     },
     onError: (error) => {
@@ -104,7 +105,15 @@ function useAuth() {
   const refreshTokenQuery = useRefreshToken();
   const logoutMutation = useLogout();
 
-  return { auth, signupMutation, signinMutation, refreshTokenQuery, logoutMutation };
+  return {
+    auth: {
+      user_id: auth?.user_id || '',
+    },
+    signupMutation,
+    signinMutation,
+    refreshTokenQuery,
+    logoutMutation,
+  };
 }
 
 export default useAuth;
