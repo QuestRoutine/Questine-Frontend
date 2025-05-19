@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
 import React, { useMemo } from 'react';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -80,7 +80,11 @@ export default function Profile() {
   const membershipDays = calculateMembershipDuration();
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.background }} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 80 }} // 고정된 패딩 값으로 설정
+    >
       <SafeAreaView style={styles.container}>
         {/* 프로필 헤더 섹션 */}
         <View style={styles.profileHeader}>
@@ -91,6 +95,8 @@ export default function Profile() {
             <Text style={[styles.userName, { color: colors.text }]}>{USER_DATA.name}</Text>
             <Text style={[styles.membershipText, { color: colors.icon }]}>{membershipDays}일째 사용 중</Text>
           </View>
+
+          {/* 설정 버튼 */}
           <TouchableOpacity
             style={styles.settingsIcon}
             onPress={navigateToSettings}
@@ -150,7 +156,7 @@ export default function Profile() {
         </View>
 
         {/* 뱃지 섹션 */}
-        <View style={[styles.card, { backgroundColor: colors.background }]}>
+        <View style={[styles.card, { backgroundColor: colors.background, marginBottom: 16 }]}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.cardTitle, { color: colors.text }]}>획득한 뱃지</Text>
             <TouchableOpacity>
@@ -194,17 +200,6 @@ export default function Profile() {
             )}
           </View>
         </View>
-
-        {/* 설정 버튼 */}
-        <TouchableOpacity
-          style={[styles.settingsButton, { backgroundColor: colors.background }]}
-          onPress={navigateToSettings}
-        >
-          <Text style={[styles.settingsButtonText, { color: colors.text }]}>설정</Text>
-        </TouchableOpacity>
-
-        {/* 하단 여백을 위한 빈 공간 */}
-        <View style={styles.bottomPadding} />
       </SafeAreaView>
     </ScrollView>
   );
@@ -214,6 +209,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginHorizontal: 20,
+    // backgroundColor: '#ffff',
   },
   profileHeader: {
     flexDirection: 'row',
@@ -376,11 +372,5 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderWidth: 1,
     borderColor: '#ddd',
-  },
-  settingsButtonText: {
-    fontWeight: '500',
-  },
-  bottomPadding: {
-    height: 30,
   },
 });

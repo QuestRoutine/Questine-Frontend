@@ -49,19 +49,6 @@ export default function Award() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
       <SafeAreaView style={styles.container}>
-        {/* 경험치 및 레벨 섹션 */}
-        <View style={styles.levelSection}>
-          <Text style={[styles.levelTitle, { color: colors.text }]}>레벨 {currentLevel}</Text>
-          <View style={styles.expContainer}>
-            <View style={styles.expBarBg}>
-              <View style={[styles.expBarFill, { width: `${expPercentage}%`, backgroundColor: colors.tint }]} />
-            </View>
-            <Text style={[styles.expText, { color: colors.text }]}>
-              {userExp} / {levelExp} XP
-            </Text>
-          </View>
-        </View>
-
         {/* 획득한 뱃지 섹션 */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>획득한 뱃지</Text>
