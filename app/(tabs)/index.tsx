@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Text, SafeAreaView, View, Pressable, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  Text,
+  SafeAreaView,
+  View,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+} from 'react-native';
 import { CalendarList, DateData } from 'react-native-calendars';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -9,6 +19,8 @@ import '@/constants/Calendars';
 import { Check } from 'lucide-react-native';
 import axiosInstance from '@/api/axios';
 import { getSecureStore } from '@/utils/secureStore';
+import { useIsFocused } from '@react-navigation/native';
+import { CalendarHeaderProps } from 'react-native-calendars/src/calendar/header';
 
 type MarkedDates = {
   [date: string]: {
@@ -31,12 +43,14 @@ interface Todo {
   created_at: string;
   exp_reward: number;
   exp_shown?: boolean; // 경험치 토스트 메시지가 표시되었는지 여부를 저장
+  due_at: string;
 }
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
   // const colors = Colors[colorScheme ?? 'light'];
   const colors = Colors['light'];
+  const isFocused = useIsFocused();
 
   const today = new Date().toISOString();
   const [selected, setSelected] = useState(today);
@@ -49,40 +63,40 @@ export default function HomeScreen() {
   useEffect(() => {
     updateAllMarkedDates();
   }, [todos]);
-
+  const fetchData = async () => {
+    try {
+      const { data } = await axiosInstance.get('/todo', {
+        headers: {
+          Authorization: `Bearer ${await getSecureStore('accessToken')}`,
+        },
+      });
+      const fetchedTodos: Todo[] = data.map((item: any) => ({
+        todo_id: item.todo_id,
+        content: item.content,
+        completed: item.completed,
+        created_at: item.created_at.split('T')[0],
+        exp_reward: item.exp_reward,
+        exp_shown: item.completed,
+        due_at: item.due_at.split('T')[0],
+      }));
+      setTodos(fetchedTodos);
+    } catch (error) {
+      console.error('할 일 목록 불러오기 실패:', error);
+    }
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data } = await axiosInstance.get('/todo', {
-          headers: {
-            Authorization: `Bearer ${await getSecureStore('accessToken')}`,
-          },
-        });
-        const fetchedTodos: Todo[] = data.map((item: any) => ({
-          todo_id: item.todo_id,
-          content: item.content,
-          completed: item.completed,
-          created_at: item.created_at.split('T')[0],
-          exp_reward: item.exp_reward,
-          exp_shown: item.completed,
-        }));
-        setTodos(fetchedTodos);
-      } catch (error) {
-        console.error('할 일 목록 불러오기 실패:', error);
-      }
-    };
     fetchData();
-  }, []);
+  }, [isFocused]);
 
   // 모든 날짜의 마커를 할 일 목록에 맞게 업데이트
   const updateAllMarkedDates = () => {
     const newMarkedDates: MarkedDates = {};
 
     // created_at을 YYYY-MM-DD로 변환하여 중복 없이 날짜 추출
-    const uniqueDates = [...new Set(todos.map((todo) => todo.created_at))];
+    const uniqueDates = [...new Set(todos.map((todo) => todo.due_at))];
 
     uniqueDates.forEach((date) => {
-      const dayTodos = todos.filter((todo) => todo.created_at === date);
+      const dayTodos = todos.filter((todo) => todo.due_at === date);
       const completedTodos = dayTodos.filter((todo) => todo.completed);
       const incompleteTodos = dayTodos.filter((todo) => !todo.completed);
 
@@ -133,26 +147,27 @@ export default function HomeScreen() {
     if (!newTodo.trim() || !selected) return;
     try {
       const accessToken = await getSecureStore('accessToken');
-      console.log(selected + 'gㅇ');
       const { data } = await axiosInstance.post(
         '/todo',
         {
           content: newTodo,
-          created_at: new Date(selected).toISOString(),
+          // created_at: new Date(selected).toISOString(),
+          due_at: new Date(selected).toISOString(),
         },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-      console.log(new Date(selected).toISOString());
       const newTodoItem: Todo = {
         todo_id: data.todo_id,
         content: data.content,
         completed: data.completed,
         created_at: selected,
+        due_at: selected,
         exp_reward: data.exp_reward,
       };
       setTodos([...todos, newTodoItem]);
+      await fetchData();
       setNewTodo('');
     } catch (error) {
       console.error('할 일 추가 실패:', error);
@@ -199,10 +214,9 @@ export default function HomeScreen() {
         const { data } = await axiosInstance.post(`/todo/done/${todo_id}`, null, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-        console.log(data);
 
-        // 경험치를 받았고, 이전에 표시된 적이 없을 때만 토스트 메시지 표시
-        if (data.exp_given && !hasShownExp) {
+        // 이전에 표시된 적이 없을 때만 경험치 토스트 메시지 표시
+        if (!hasShownExp) {
           showToast(data.exp);
 
           // 경험치 표시 여부 업데이트
@@ -236,7 +250,7 @@ export default function HomeScreen() {
     }
   };
 
-  const filteredTodos = todos.filter((todo) => todo.created_at === selected);
+  const filteredTodos = todos.filter((todo) => todo.due_at.split('T')[0] === selected);
 
   // custom day
   const dayComponent = ({ date, state, marking }: any) => {
@@ -354,11 +368,88 @@ export default function HomeScreen() {
     );
   };
 
+  const customHeader = (props: CalendarHeaderProps) => {
+    const year = props.month?.getFullYear();
+    const month = props.month?.getMonth() + 1;
+
+    // 월 변경 시 호출할 공통 함수
+    const handleMonthChange = (monthOffset: number) => {
+      if (props.month && props.addMonth) {
+        const newDate = new Date(props.month);
+        newDate.setMonth(newDate.getMonth() + monthOffset);
+        props.addMonth(monthOffset);
+
+        // onMonthChange 외부 상태 업데이트 (동기화)
+        onMonthChange({
+          year: newDate.getFullYear(),
+          month: newDate.getMonth() + 1,
+          day: 1,
+          timestamp: newDate.getTime(),
+          dateString: `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}-01`,
+        });
+      }
+    };
+
+    // 오늘 이동 함수
+    const goToToday = () => {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      setSelected(todayStr);
+      // 달력의 현재 월과 오늘 날짜의 월 차이 계산
+      if (props.month) {
+        const currentMonth = props.month.getMonth();
+        const targetMonth = today.getMonth();
+        const currentYear = props.month.getFullYear();
+        const targetYear = today.getFullYear();
+
+        // 연도 차이 고려한 월 차이 계산
+        const monthDiff = (targetYear - currentYear) * 12 + (targetMonth - currentMonth);
+
+        if (monthDiff !== 0) {
+          handleMonthChange(monthDiff);
+        }
+      }
+    };
+
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Pressable onPress={() => handleMonthChange(-1)} style={{ padding: 5 }}>
+            <Text style={{ fontSize: 20, color: '#FF8DA1' }}>◀</Text>
+          </Pressable>
+
+          <Pressable
+            style={{
+              marginLeft: 10,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              backgroundColor: '#FEE2E8',
+              borderRadius: 12,
+            }}
+            onPress={goToToday}
+          >
+            <Text style={{ color: '#FF8DA1', fontWeight: '600', fontSize: 14 }}>오늘</Text>
+          </Pressable>
+        </View>
+
+        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
+          {year}년 {month < 10 ? `0${month}` : month}월
+        </Text>
+
+        <Pressable onPress={() => handleMonthChange(1)} style={{ padding: 5 }}>
+          <Text style={{ fontSize: 20, color: '#FF8DA1' }}>▶</Text>
+        </Pressable>
+      </View>
+    );
+  };
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background || '#FFF' }}>
       <SafeAreaView style={styles.container}>
         <Text style={styles.header}>Qustine</Text>
         <CalendarList
+          key={currentMonth}
+          current={currentMonth}
           style={styles.calendar}
           onDayPress={onDayPress}
           horizontal
@@ -368,66 +459,60 @@ export default function HomeScreen() {
           dayComponent={dayComponent}
           calendarStyle={styles.calendarStyle}
           hideArrows={false}
-          renderHeader={(date) => {
-            const dateObj = new Date(date);
-            const year = dateObj.getFullYear();
-            const month = dateObj.getMonth() + 1;
-            return (
-              <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'center' }}>
-                {year}년 {month < 10 ? `0${month}` : month}월
-              </Text>
-            );
-          }}
+          customHeader={customHeader}
         />
+        <KeyboardAvoidingView>
+          {selected ? (
+            <View style={styles.todoSection}>
+              <Text style={styles.selectedDateText}>{selected} 할 일</Text>
 
-        {selected ? (
-          <View style={styles.todoSection}>
-            <Text style={styles.selectedDateText}>{selected} 할 일</Text>
+              <View style={styles.todoInputContainer}>
+                <TextInput
+                  style={styles.todoInput}
+                  value={newTodo}
+                  onChangeText={setNewTodo}
+                  onSubmitEditing={addTodo}
+                  submitBehavior='submit'
+                  placeholder='새로운 할 일을 입력하세요'
+                  placeholderTextColor='#888'
+                  autoCapitalize='none'
+                />
+                <TouchableOpacity style={styles.addButton} onPress={addTodo}>
+                  <Text style={styles.addButtonText}>추가</Text>
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.todoInputContainer}>
-              <TextInput
-                style={styles.todoInput}
-                value={newTodo}
-                onChangeText={setNewTodo}
-                onSubmitEditing={addTodo}
-                submitBehavior='submit'
-                placeholder='새로운 할 일을 입력하세요'
-                placeholderTextColor='#888'
-                autoCapitalize='none'
-              />
-              <TouchableOpacity style={styles.addButton} onPress={addTodo}>
-                <Text style={styles.addButtonText}>추가</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.todoListContainer}>
-              {filteredTodos.length > 0 ? (
-                filteredTodos.map((todo) => (
-                  <View key={todo.todo_id} style={styles.todoItem}>
-                    <TouchableOpacity
-                      style={[styles.checkbox, todo.completed && styles.checkboxChecked]}
-                      onPress={() => toggleTodoComplete(todo.todo_id)}
-                    >
-                      {todo.completed && <Text style={styles.checkmark}>✓</Text>}
-                    </TouchableOpacity>
-                    <View style={styles.todoContent}>
-                      <Text style={[styles.todoText, todo.completed && styles.todoTextCompleted]}>{todo.content}</Text>
+              <View style={styles.todoListContainer}>
+                {filteredTodos.length > 0 ? (
+                  filteredTodos.map((todo) => (
+                    <View key={todo.todo_id} style={styles.todoItem}>
+                      <TouchableOpacity
+                        style={[styles.checkbox, todo.completed && styles.checkboxChecked]}
+                        onPress={() => toggleTodoComplete(todo.todo_id)}
+                      >
+                        {todo.completed && <Text style={styles.checkmark}>✓</Text>}
+                      </TouchableOpacity>
+                      <View style={styles.todoContent}>
+                        <Text style={[styles.todoText, todo.completed && styles.todoTextCompleted]}>
+                          {todo.content}
+                        </Text>
+                      </View>
+                      <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTodo(todo.todo_id)}>
+                        <Text style={styles.deleteButtonText}>×</Text>
+                      </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTodo(todo.todo_id)}>
-                      <Text style={styles.deleteButtonText}>×</Text>
-                    </TouchableOpacity>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyMessage}>할 일이 없습니다. 새로운 할 일을 추가해보세요!</Text>
-              )}
+                  ))
+                ) : (
+                  <Text style={styles.emptyMessage}>할 일이 없습니다. 새로운 할 일을 추가해보세요!</Text>
+                )}
+              </View>
             </View>
-          </View>
-        ) : (
-          <View style={styles.noDateSelectedContainer}>
-            <Text style={styles.noDateSelectedText}>날짜를 선택하여 할 일을 관리하세요</Text>
-          </View>
-        )}
+          ) : (
+            <View style={styles.noDateSelectedContainer}>
+              <Text style={styles.noDateSelectedText}>날짜를 선택하여 할 일을 관리하세요</Text>
+            </View>
+          )}
+        </KeyboardAvoidingView>
 
         {/* 하단 여백을 위한 빈 공간 */}
         <View style={styles.bottomPadding} />
@@ -508,6 +593,7 @@ const styles = StyleSheet.create({
   todoSection: {
     backgroundColor: '#fff',
     borderRadius: 10,
+    height: '100%',
     padding: 16,
     elevation: 4,
     shadowColor: '#000',
