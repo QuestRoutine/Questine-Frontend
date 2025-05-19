@@ -1,21 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
-// 임시 사용자 데이터
-const USER_DATA = {
-  name: '홍길동',
-  level: 3,
-  exp: 350,
-  totalExp: 650,
-  completedTodos: 15,
-  streak: 2,
-  joinDate: '2025-01-15',
-  avatarUrl: null, // 기본 아바타 사용
-};
+import { getSecureStore } from '@/utils/secureStore';
+import axiosInstance from '@/api/axios';
+import { useIsFocused } from '@react-navigation/native';
 
 // 임시 뱃지 데이터
 const BADGES = [
@@ -47,25 +38,64 @@ const STATISTICS = {
   totalCompletedTasks: 15,
 };
 
-// 레벨업에 필요한 경험치 계산
-const calculateRequiredExp = (currentLevel: number) => {
-  return currentLevel * 150 + 200;
+type UserInfo = {
+  user_id: string;
+  email: string;
+  login_type: string;
+  created_at: Date;
+  updated_at: Date;
+  nickname: string;
+  exp: number;
+  gold: number;
+  level: number;
 };
 
 export default function Profile() {
   const colorScheme = useColorScheme();
   const colors = Colors['light'];
+  const isFocused = useIsFocused();
+  const [userInfo, setUserInfo] = useState<UserInfo>({
+    user_id: 'user_id',
+    email: 'email',
+    login_type: 'login_type',
+    created_at: new Date(),
+    updated_at: new Date(),
+    nickname: 'nickname',
+    exp: 0,
+    gold: 0,
+    level: 1,
+  });
+
+  useEffect(() => {
+    if (!isFocused) return;
+    const fetchData = async () => {
+      const accessToken = await getSecureStore('accessToken');
+      const { data } = await axiosInstance.get('/auth/me', { headers: { Authorization: `Bearer ${accessToken}` } });
+      console.log(data);
+      setUserInfo(data);
+      return data;
+    };
+    fetchData();
+  }, [isFocused]);
+
   const router = useRouter();
 
-  const requiredExp = calculateRequiredExp(USER_DATA.level);
-  const expPercentage = useMemo(() => (USER_DATA.exp / requiredExp) * 100, [USER_DATA.exp, requiredExp]);
+  // 레벨업에 필요한 경험치 계산
+  const calculateRequiredExp = (currentLevel: number) => {
+    const expPerLevel = 1000;
+    const newLevel = Math.floor(userInfo.exp / expPerLevel) + 1;
+    return newLevel;
+  };
+
+  const requiredExp = calculateRequiredExp(userInfo.level);
+  const expPercentage = useMemo(() => (userInfo.exp / requiredExp) * 100, [userInfo.exp, requiredExp]);
 
   const unlockedBadges = useMemo(() => BADGES.filter((badge) => badge.isUnlocked), []);
   const lockedBadges = useMemo(() => BADGES.filter((badge) => !badge.isUnlocked), []);
 
   // 가입 기간 계산
   const calculateMembershipDuration = () => {
-    const joinDate = new Date(USER_DATA.joinDate);
+    const joinDate = new Date(userInfo.created_at);
     const today = new Date();
     const diffTime = Math.abs(today.getTime() - joinDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -78,7 +108,6 @@ export default function Profile() {
   };
 
   const membershipDays = calculateMembershipDuration();
-
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -89,10 +118,12 @@ export default function Profile() {
         {/* 프로필 헤더 섹션 */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>{USER_DATA.name.charAt(0)}</Text>
+            <Text style={styles.avatarText}>{userInfo.nickname.charAt(0)}</Text>
           </View>
           <View style={styles.profileInfo}>
-            <Text style={[styles.userName, { color: colors.text }]}>{USER_DATA.name}</Text>
+            <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
+              {userInfo.nickname}
+            </Text>
             <Text style={[styles.membershipText, { color: colors.icon }]}>{membershipDays}일째 사용 중</Text>
           </View>
 
@@ -106,22 +137,6 @@ export default function Profile() {
           </TouchableOpacity>
         </View>
 
-        {/* 레벨 및 경험치 섹션 */}
-        <View style={[styles.card, { backgroundColor: colors.background }]}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>레벨 {USER_DATA.level}</Text>
-          <View style={styles.expContainer}>
-            <View style={styles.expBarBg}>
-              <View style={[styles.expBarFill, { width: `${expPercentage}%`, backgroundColor: '#FF8DA1' }]} />
-            </View>
-            <Text style={[styles.expText, { color: colors.icon }]}>
-              {USER_DATA.exp} / {requiredExp} XP
-            </Text>
-          </View>
-          <Text style={[styles.nextLevelText, { color: colors.icon }]}>
-            다음 레벨까지 {requiredExp - USER_DATA.exp} XP 남았습니다
-          </Text>
-        </View>
-
         {/* 통계 정보 섹션 */}
         <View style={[styles.card, { backgroundColor: colors.background }]}>
           <Text style={[styles.cardTitle, { color: colors.text }]}>나의 투두 통계</Text>
@@ -131,7 +146,7 @@ export default function Profile() {
               <Text style={[styles.statLabel, { color: colors.icon }]}>완료한 할 일</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{USER_DATA.streak}</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{0}</Text>
               <Text style={[styles.statLabel, { color: colors.icon }]}>현재 연속일</Text>
             </View>
             <View style={styles.statItem}>
@@ -209,7 +224,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginHorizontal: 20,
-    // backgroundColor: '#ffff',
   },
   profileHeader: {
     flexDirection: 'row',
@@ -234,7 +248,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 4,
   },
@@ -259,29 +273,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
-  },
-  expContainer: {
-    width: '100%',
-    marginBottom: 8,
-  },
-  expBarBg: {
-    height: 12,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  expBarFill: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  expText: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  nextLevelText: {
-    fontSize: 14,
-    textAlign: 'center',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -363,14 +354,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 16,
     fontStyle: 'italic',
-  },
-  settingsButton: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#ddd',
   },
 });
