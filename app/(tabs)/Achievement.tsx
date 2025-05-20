@@ -1,7 +1,10 @@
 import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import axiosInstance from '@/api/axios';
+import { getSecureStore } from '@/utils/secureStore';
+import { useIsFocused } from '@react-navigation/native';
 
 const BADGES = [
   { id: 1, title: '첫 투두 완료', description: '첫 번째 할 일을 완료했어요', isUnlocked: true, icon: '🏆' },
@@ -31,6 +34,14 @@ const ACHIEVEMENTS = [
   { id: 3, title: '빠른 완료', progress: 12, maxProgress: 20, reward: 30, icon: '⚡' },
 ];
 
+type AchievementProps = {
+  achievement_id: number | null;
+  title: string | null;
+  description: string | null;
+  achieved_at: Date | null;
+  icon: null;
+};
+
 export default function Award() {
   const colorScheme = useColorScheme();
   // const colors = Colors[colorScheme ?? 'light'];
@@ -45,38 +56,59 @@ export default function Award() {
 
   const unlockedBadges = useMemo(() => BADGES.filter((badge) => badge.isUnlocked), []);
   const lockedBadges = useMemo(() => BADGES.filter((badge) => !badge.isUnlocked), []);
+  const isFocused = useIsFocused();
+
+  const [achievements, setAchievements] = useState<AchievementProps[]>([]);
+
+  useEffect(() => {
+    if (!isFocused) return;
+    const fetchData = async () => {
+      const accessToken = await getSecureStore('accessToken');
+      const {
+        data: { data },
+      } = await axiosInstance.get('/achievements/user', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      // console.log(data);
+      setAchievements(data);
+      return data;
+    };
+    fetchData();
+  }, [isFocused]);
+
+  console.log(achievements);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
       <SafeAreaView style={styles.container}>
-        {/* 획득한 뱃지 섹션 */}
+        {/* 획득한 업적 섹션 */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>획득한 뱃지</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>획득한 업적</Text>
           <View style={styles.badgeGrid}>
-            {unlockedBadges.map((badge) => (
-              <TouchableOpacity key={badge.id} style={styles.badgeItem}>
+            {achievements.map((item: AchievementProps) => (
+              <TouchableOpacity key={item.achievement_id} style={styles.badgeItem}>
                 <View style={[styles.badgeIcon, { backgroundColor: colors.tint + '20' }]}>
-                  <Text style={styles.badgeEmoji}>{badge.icon}</Text>
+                  <Text style={styles.badgeEmoji}>{item.icon}🍭</Text>
                 </View>
                 <Text style={[styles.badgeName, { color: colors.text }]} numberOfLines={1}>
-                  {badge.title}
+                  {item.title}
                 </Text>
                 <Text style={[styles.badgeDesc, { color: colors.icon }]} numberOfLines={2}>
-                  {badge.description}
+                  {item.description}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* 잠긴 뱃지 섹션 */}
+        {/* 잠긴 업적 섹션 */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>다가올 뱃지</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>다가올 업적</Text>
           <View style={styles.badgeGrid}>
-            {lockedBadges.map((badge) => (
-              <TouchableOpacity key={badge.id} style={styles.badgeItem}>
+            {achievements.map((badge) => (
+              <TouchableOpacity key={badge.achievement_id} style={styles.badgeItem}>
                 <View style={[styles.badgeIcon, { backgroundColor: colors.icon + '20' }]}>
-                  <Text style={[styles.badgeEmoji, { opacity: 0.5 }]}>{badge.icon}</Text>
+                  <Text style={[styles.badgeEmoji, { opacity: 0.5 }]}>{badge.icon}🍭</Text>
                 </View>
                 <Text style={[styles.badgeName, { color: colors.icon }]} numberOfLines={1}>
                   {badge.title}
