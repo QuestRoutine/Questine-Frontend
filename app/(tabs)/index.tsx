@@ -374,6 +374,9 @@ export default function HomeScreen() {
   const customHeader = (props: CalendarHeaderProps) => {
     const year = props.month?.getFullYear();
     const month = props.month?.getMonth() + 1;
+    const today = new Date();
+    const isCurrentMonth =
+      props.month && props.month.getFullYear() === today.getFullYear() && props.month.getMonth() === today.getMonth();
 
     // 월 변경 시 호출할 공통 함수
     const handleMonthChange = (monthOffset: number) => {
@@ -417,22 +420,25 @@ export default function HomeScreen() {
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Pressable onPress={() => handleMonthChange(-1)} style={{ padding: 5 }}>
+          <Pressable onPress={() => handleMonthChange(-1)}>
             <Text style={{ fontSize: 20, color: '#FF8DA1' }}>◀</Text>
           </Pressable>
 
-          <Pressable
-            style={{
-              marginLeft: 10,
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              backgroundColor: '#FEE2E8',
-              borderRadius: 12,
-            }}
-            onPress={goToToday}
-          >
-            <Text style={{ color: '#FF8DA1', fontWeight: '600', fontSize: 14 }}>오늘</Text>
-          </Pressable>
+          {!isCurrentMonth && (
+            <Pressable
+              style={{
+                position: 'absolute',
+                marginLeft: 24,
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                backgroundColor: '#FEE2E8',
+                borderRadius: 12,
+              }}
+              onPress={goToToday}
+            >
+              <Text style={{ color: '#FF8DA1', fontWeight: '600', fontSize: 14 }}>오늘</Text>
+            </Pressable>
+          )}
         </View>
 
         <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
