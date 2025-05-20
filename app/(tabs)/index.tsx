@@ -9,6 +9,9 @@ import {
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
+  Image,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { CalendarList, DateData } from 'react-native-calendars';
 import { Colors } from '@/constants/Colors';
@@ -34,7 +37,7 @@ type MarkedDates = {
   };
 };
 
-const COLORS = ['#f9a8d4', '#fde68a', '#a3e635', '#7dd3fc', '#c4b5fd'];
+const COLORS = ['#fda4af', '#fdba74', '#fef08a', '#bef264', '#7dd3fc', '#c4b5fd', '#f0abfc'];
 
 interface Todo {
   todo_id: number;
@@ -59,6 +62,7 @@ export default function HomeScreen() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // 할 일 목록에 따라 날짜 마커 초기화
   useEffect(() => {
@@ -67,13 +71,17 @@ export default function HomeScreen() {
   useEffect(() => {
     updateAllMarkedDates();
   }, [todos]);
+
   const fetchData = async () => {
+    setIsLoading(true);
     try {
+      const accessToken = await getSecureStore('accessToken');
       const { data } = await axiosInstance.get('/todo', {
         headers: {
-          Authorization: `Bearer ${await getSecureStore('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
+
       const fetchedTodos: Todo[] = data.map((item: any) => ({
         todo_id: item.todo_id,
         content: item.content,
@@ -83,11 +91,17 @@ export default function HomeScreen() {
         exp_shown: item.completed,
         due_at: item.due_at.split('T')[0],
       }));
+
       setTodos(fetchedTodos);
     } catch (error) {
       console.error('할 일 목록 불러오기 실패:', error);
+    } finally {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
     }
   };
+
   useEffect(() => {
     fetchData();
   }, [isFocused]);
@@ -175,8 +189,8 @@ export default function HomeScreen() {
         exp_reward: data.exp_reward,
       };
       setTodos([...todos, newTodoItem]);
-      await fetchData();
       setNewTodo('');
+      await fetchData();
     } catch (error) {
       console.error('할 일 추가 실패:', error);
     }
@@ -318,8 +332,8 @@ export default function HomeScreen() {
 
               <LinearGradient
                 style={[styles.splitColorContainer, isSelected && styles.selectedTodoIndicator]}
-                colors={dots.slice(0, 5).map((dot: { color: string }) => dot.color)}
-                locations={dots.slice(0, 5).map((v: any, index: number) => index / (Math.min(dots.length, 5) - 1 || 1))}
+                colors={dots.slice(0, 7).map((dot: { color: string }) => dot.color)}
+                locations={dots.slice(0, 7).map((v: any, index: number) => index / (Math.min(dots.length, 7) - 1 || 1))}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
               >
@@ -454,77 +468,119 @@ export default function HomeScreen() {
       </View>
     );
   };
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchData();
+      updateAllMarkedDates();
+    } catch (error) {
+      console.error('새로고침 실패:', error);
+      Toast.show({
+        type: 'error',
+        text1: '오류',
+        text2: '데이터를 새로고침하는데 실패했습니다.',
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.background || '#FFF' }}>
+    <ScrollView
+      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+      style={{ flex: 1, backgroundColor: colors.background || '#FFF' }}
+    >
       <SafeAreaView style={styles.container}>
-        <Text style={styles.header}>Qustine</Text>
-        <CalendarList
-          key={currentMonth}
-          current={currentMonth}
-          style={styles.calendar}
-          onDayPress={onDayPress}
-          horizontal
-          pagingEnabled
-          onMonthChange={onMonthChange}
-          markedDates={markedDates}
-          dayComponent={dayComponent}
-          calendarStyle={styles.calendarStyle}
-          hideArrows={false}
-          customHeader={customHeader}
-        />
-        <KeyboardAvoidingView>
-          {selected ? (
-            <View style={styles.todoSection}>
-              <Text style={styles.selectedDateText}>{selected} 할 일</Text>
+        <View style={styles.header}>
+          <Image
+            source={require('../../assets/images/Questine.png')}
+            style={{
+              width: 150,
+              height: 60,
+            }}
+            resizeMode='contain'
+            accessibilityLabel='Questine Logo'
+          />
+          <Image src='../../assets/images/Questine.png' alt='Questine Logo' />
+        </View>
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <View style={styles.loadingBox}>
+              <ActivityIndicator size='large' color='hotpink' />
+              <Text style={styles.loadingText}>할 일 불러오는 중...</Text>
+            </View>
+          </View>
+        )}
+        <>
+          <CalendarList
+            key={currentMonth}
+            current={currentMonth}
+            style={styles.calendar}
+            onDayPress={onDayPress}
+            horizontal
+            pagingEnabled
+            onMonthChange={onMonthChange}
+            markedDates={markedDates}
+            dayComponent={dayComponent}
+            calendarStyle={styles.calendarStyle}
+            hideArrows={false}
+            customHeader={customHeader}
+          />
+          <KeyboardAvoidingView>
+            {selected ? (
+              <View style={styles.todoSection}>
+                <Text style={styles.selectedDateText}>{selected} 할 일</Text>
 
-              <View style={styles.todoInputContainer}>
-                <TextInput
-                  style={styles.todoInput}
-                  value={newTodo}
-                  onChangeText={setNewTodo}
-                  onSubmitEditing={addTodo}
-                  submitBehavior='submit'
-                  placeholder='새로운 할 일을 입력하세요'
-                  placeholderTextColor='#888'
-                  autoCapitalize='none'
-                />
-                <TouchableOpacity style={styles.addButton} onPress={addTodo}>
-                  <Text style={styles.addButtonText}>추가</Text>
-                </TouchableOpacity>
-              </View>
+                <View style={styles.todoInputContainer}>
+                  <TextInput
+                    style={styles.todoInput}
+                    value={newTodo}
+                    onChangeText={setNewTodo}
+                    onSubmitEditing={addTodo}
+                    submitBehavior='submit'
+                    placeholder='새로운 할 일을 입력하세요'
+                    placeholderTextColor='#888'
+                    autoCapitalize='none'
+                    autoFocus={false}
+                  />
+                  <TouchableOpacity style={styles.addButton} onPress={addTodo}>
+                    <Text style={styles.addButtonText}>추가</Text>
+                  </TouchableOpacity>
+                </View>
 
-              <View style={styles.todoListContainer}>
-                {filteredTodos.length > 0 ? (
-                  filteredTodos.map((todo) => (
-                    <View key={todo.todo_id} style={styles.todoItem}>
-                      <TouchableOpacity
-                        style={[styles.checkbox, todo.completed && styles.checkboxChecked]}
-                        onPress={() => toggleTodoComplete(todo.todo_id)}
-                      >
-                        {todo.completed && <Text style={styles.checkmark}>✓</Text>}
-                      </TouchableOpacity>
-                      <View style={styles.todoContent}>
-                        <Text style={[styles.todoText, todo.completed && styles.todoTextCompleted]}>
-                          {todo.content}
-                        </Text>
+                <View style={styles.todoListContainer}>
+                  {filteredTodos.length > 0 ? (
+                    filteredTodos.map((todo) => (
+                      <View key={todo.todo_id} style={styles.todoItem}>
+                        <TouchableOpacity
+                          style={[styles.checkbox, todo.completed && styles.checkboxChecked]}
+                          onPress={() => toggleTodoComplete(todo.todo_id)}
+                        >
+                          {todo.completed && <Text style={styles.checkmark}>✓</Text>}
+                        </TouchableOpacity>
+                        <View style={styles.todoContent}>
+                          <Text style={[styles.todoText, todo.completed && styles.todoTextCompleted]}>
+                            {todo.content}
+                          </Text>
+                        </View>
+                        <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTodo(todo.todo_id)}>
+                          <Text style={styles.deleteButtonText}>×</Text>
+                        </TouchableOpacity>
                       </View>
-                      <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTodo(todo.todo_id)}>
-                        <Text style={styles.deleteButtonText}>×</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.emptyMessage}>할 일이 없습니다. 새로운 할 일을 추가해보세요!</Text>
-                )}
+                    ))
+                  ) : (
+                    <Text style={styles.emptyMessage}>할 일이 없습니다. 새로운 할 일을 추가해보세요!</Text>
+                  )}
+                </View>
               </View>
-            </View>
-          ) : (
-            <View style={styles.noDateSelectedContainer}>
-              <Text style={styles.noDateSelectedText}>날짜를 선택하여 할 일을 관리하세요</Text>
-            </View>
-          )}
-        </KeyboardAvoidingView>
+            ) : (
+              <View style={styles.noDateSelectedContainer}>
+                <Text style={styles.noDateSelectedText}>날짜를 선택하여 할 일을 관리하세요</Text>
+              </View>
+            )}
+          </KeyboardAvoidingView>
+        </>
 
         {/* 하단 여백을 위한 빈 공간 */}
         <View style={styles.bottomPadding} />
@@ -534,15 +590,45 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    zIndex: 999,
+  },
+  loadingBox: {
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    elevation: 5,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 300,
+    marginVertical: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#888',
+  },
   container: {
     flex: 1,
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
     color: '#FF8DA1',
-    textAlign: 'center',
+    marginHorizontal: 'auto',
   },
   calendar: {
     borderRadius: 10,
