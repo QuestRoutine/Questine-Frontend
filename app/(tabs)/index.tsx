@@ -53,6 +53,7 @@ export default function HomeScreen() {
   const isFocused = useIsFocused();
 
   const today = new Date().toISOString();
+  const todayStr = today.split('T')[0];
   const [selected, setSelected] = useState(today);
   const [currentMonth, setCurrentMonth] = useState(today);
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -139,10 +140,14 @@ export default function HomeScreen() {
 
   // 월 변경 시, 호출되는 함수
   const onMonthChange = (month: DateData) => {
-    console.log('Month changed:', month);
     const newMonth = `${month.year}-${month.month < 10 ? '0' + month.month : month.month}-01`;
     console.log('New month string:', newMonth);
     setCurrentMonth(newMonth);
+    if (month.month === +todayStr.split('-')[1]) {
+      setSelected(todayStr);
+    } else {
+      setSelected(newMonth);
+    }
   };
 
   // 할 일 추가
@@ -398,8 +403,6 @@ export default function HomeScreen() {
 
     // 오늘 이동 함수
     const goToToday = () => {
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
       setSelected(todayStr);
       // 달력의 현재 월과 오늘 날짜의 월 차이 계산
       if (props.month) {
