@@ -61,6 +61,9 @@ export default function HomeScreen() {
 
   // 할 일 목록에 따라 날짜 마커 초기화
   useEffect(() => {
+    setSelected(today.split('T')[0]);
+  }, []);
+  useEffect(() => {
     updateAllMarkedDates();
   }, [todos]);
   const fetchData = async () => {

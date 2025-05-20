@@ -39,14 +39,6 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name='Dungeon'
-          options={{
-            title: '던전',
-            tabBarActiveTintColor: 'hotpink',
-            tabBarIcon: ({ color }) => <Swords size={20} color={color} />,
-          }}
-        />
-        <Tabs.Screen
           name='Character'
           options={{
             title: '캐릭터',
