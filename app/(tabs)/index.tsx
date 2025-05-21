@@ -12,6 +12,7 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { CalendarList, DateData } from 'react-native-calendars';
 import { Colors } from '@/constants/Colors';
@@ -96,9 +97,7 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('할 일 목록 불러오기 실패:', error);
     } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
+      setIsLoading(false);
     }
   };
 
@@ -487,47 +486,47 @@ export default function HomeScreen() {
     }
   };
   return (
-    <ScrollView
-      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
-      style={{ flex: 1, backgroundColor: colors.background || '#FFF' }}
-    >
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Image
-            source={require('../../assets/images/Questine.png')}
-            style={{
-              width: 150,
-              height: 60,
-            }}
-            resizeMode='contain'
-            accessibilityLabel='Questine Logo'
-          />
-          <Image src='../../assets/images/Questine.png' alt='Questine Logo' />
-        </View>
-        {isLoading && (
-          <View style={styles.loadingOverlay}>
-            <View style={styles.loadingBox}>
-              <ActivityIndicator size='large' color='hotpink' />
-              <Text style={styles.loadingText}>할 일 불러오는 중...</Text>
-            </View>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <ScrollView
+        keyboardShouldPersistTaps='handled'
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+        style={{ flex: 1, backgroundColor: colors.background || '#FFF' }}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <Image
+              source={require('../../assets/images/Questine.png')}
+              style={{
+                width: 150,
+                height: 60,
+              }}
+              resizeMode='contain'
+              accessibilityLabel='Questine Logo'
+            />
+            <Image src='../../assets/images/Questine.png' alt='Questine Logo' />
           </View>
-        )}
-        <>
-          <CalendarList
-            key={currentMonth}
-            current={currentMonth}
-            style={styles.calendar}
-            onDayPress={onDayPress}
-            horizontal
-            pagingEnabled
-            onMonthChange={onMonthChange}
-            markedDates={markedDates}
-            dayComponent={dayComponent}
-            calendarStyle={styles.calendarStyle}
-            hideArrows={false}
-            customHeader={customHeader}
-          />
-          <KeyboardAvoidingView>
+          {isLoading && (
+            <View style={styles.loadingOverlay}>
+              {/* <View style={styles.loadingBox}> */}
+              <ActivityIndicator size='large' color='hotpink' />
+              {/* </View> */}
+            </View>
+          )}
+          <>
+            <CalendarList
+              key={currentMonth}
+              current={currentMonth}
+              style={styles.calendar}
+              onDayPress={onDayPress}
+              horizontal
+              pagingEnabled
+              onMonthChange={onMonthChange}
+              markedDates={markedDates}
+              dayComponent={dayComponent}
+              calendarStyle={styles.calendarStyle}
+              hideArrows={false}
+              customHeader={customHeader}
+            />
             {selected ? (
               <View style={styles.todoSection}>
                 <Text style={styles.selectedDateText}>{selected} 할 일</Text>
@@ -579,13 +578,13 @@ export default function HomeScreen() {
                 <Text style={styles.noDateSelectedText}>날짜를 선택하여 할 일을 관리하세요</Text>
               </View>
             )}
-          </KeyboardAvoidingView>
-        </>
+          </>
 
-        {/* 하단 여백을 위한 빈 공간 */}
-        <View style={styles.bottomPadding} />
-      </SafeAreaView>
-    </ScrollView>
+          {/* 하단 여백을 위한 빈 공간 */}
+          <View style={styles.bottomPadding} />
+        </SafeAreaView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -600,17 +599,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     zIndex: 999,
-  },
-  loadingBox: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    elevation: 5,
   },
   loadingContainer: {
     justifyContent: 'center',
