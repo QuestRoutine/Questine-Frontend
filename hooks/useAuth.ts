@@ -58,8 +58,10 @@ function useLogout() {
     mutationFn: postLogout,
     onSuccess: () => {
       removeHeader('Authorization');
+      deleteSecureStore('accessToken');
       deleteSecureStore('refreshToken');
       queryClient.clear();
+      router.dismissAll();
       router.replace('/auth/Login');
     },
     onError: (error) => {
