@@ -109,12 +109,8 @@ export default function Profile() {
 
   const membershipDays = calculateMembershipDuration();
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 80 }} // 고정된 패딩 값으로 설정
-    >
-      <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* 프로필 헤더 섹션 */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
@@ -215,8 +211,8 @@ export default function Profile() {
             )}
           </View>
         </View>
-      </SafeAreaView>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

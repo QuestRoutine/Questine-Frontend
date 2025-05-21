@@ -57,36 +57,34 @@ export default function Settings() {
   ];
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.background, paddingHorizontal: 20 }}>
-      <SafeAreaView style={styles.container}>
-        {settingItems.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={[styles.menuItem, { borderBottomColor: colors.icon + '20' }]}
-            onPress={() => {
-              if (item.route) {
-                router.push(item.route);
-              } else if (item.action) {
-                item.action();
-              }
-            }}
-          >
-            <View style={styles.menuItemContent}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.icon + '10' }]}>
-                <Ionicons name={item.icon as any} size={22} color={colors.text} />
-              </View>
-              <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
+    <SafeAreaView style={styles.container}>
+      {settingItems.map((item) => (
+        <TouchableOpacity
+          key={item.id}
+          style={[styles.menuItem, { borderBottomColor: colors.icon + '20' }]}
+          onPress={() => {
+            if (item.route) {
+              router.push(item.route);
+            } else if (item.action) {
+              item.action();
+            }
+          }}
+        >
+          <View style={styles.menuItemContent}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.icon + '10' }]}>
+              <Ionicons name={item.icon as any} size={22} color={colors.text} />
             </View>
-            <Ionicons name='chevron-forward' size={20} color={colors.icon} />
-          </TouchableOpacity>
-        ))}
+            <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
+          </View>
+          <Ionicons name='chevron-forward' size={20} color={colors.icon} />
+        </TouchableOpacity>
+      ))}
 
-        {/* 앱 정보 */}
-        <View style={styles.appInfo}>
-          <Text style={[styles.appVersion, { color: colors.icon }]}>Questine v1.0.0</Text>
-        </View>
-      </SafeAreaView>
-    </ScrollView>
+      {/* 앱 정보 */}
+      <View style={styles.appInfo}>
+        <Text style={[styles.appVersion, { color: colors.icon }]}>Questine v1.0.0</Text>
+      </View>
+    </SafeAreaView>
   );
 }
 

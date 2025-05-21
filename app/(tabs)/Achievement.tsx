@@ -94,7 +94,7 @@ export default function Award() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
+    <ScrollView style={{ flex: 1 }}>
       <SafeAreaView style={styles.container}>
         <Modal
           isVisible={modalVisible}

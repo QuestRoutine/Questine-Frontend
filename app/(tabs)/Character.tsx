@@ -108,7 +108,6 @@ const ITEM_CATEGORIES = [
 const colors = Colors['light'];
 
 export default function CharacterScreen() {
-  const backgroundColor = colors.background;
   const textColor = colors.text;
   const cardBgColor = '#fff';
   const accentColor = colors.tint;
@@ -314,7 +313,7 @@ export default function CharacterScreen() {
   };
   const { width, height } = Dimensions.get('window');
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+    <SafeAreaView style={styles.container}>
       <StatusBar style='auto' />
 
       <View style={styles.header}>

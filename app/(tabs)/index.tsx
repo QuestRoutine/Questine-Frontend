@@ -487,13 +487,12 @@ export default function HomeScreen() {
     }
   };
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <ScrollView
-        keyboardShouldPersistTaps='handled'
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
-        style={{ flex: 1, backgroundColor: colors.background || '#FFF' }}
-      >
-        <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'height' : 'padding'} style={{ flex: 1 }}>
+        <ScrollView
+          keyboardShouldPersistTaps='handled'
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+        >
           <View style={styles.header}>
             <Image
               source={require('../../assets/images/Questine.png')}
@@ -583,9 +582,9 @@ export default function HomeScreen() {
 
           {/* 하단 여백을 위한 빈 공간 */}
           <View style={styles.bottomPadding} />
-        </SafeAreaView>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -614,6 +613,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   header: {
     color: '#FF8DA1',
