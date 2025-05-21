@@ -441,7 +441,8 @@ export default function HomeScreen() {
           </Pressable>
 
           {!isCurrentMonth && (
-            <Pressable
+            <TouchableOpacity
+              activeOpacity={0.8}
               style={{
                 position: 'absolute',
                 marginLeft: 24,
@@ -453,7 +454,7 @@ export default function HomeScreen() {
               onPress={goToToday}
             >
               <Text style={{ color: '#FF8DA1', fontWeight: '600', fontSize: 14 }}>오늘</Text>
-            </Pressable>
+            </TouchableOpacity>
           )}
         </View>
 
