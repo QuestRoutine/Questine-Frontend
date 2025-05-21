@@ -151,7 +151,7 @@ export default function Award() {
                             height: 64,
                             backgroundColor: QuestineColors.SKY_100,
                             borderRadius: 4,
-                            borderWidth: 4,
+                            borderWidth: 3,
                           }}
                           resizeMode='contain'
                         />
@@ -162,7 +162,7 @@ export default function Award() {
                             height: 64,
                             backgroundColor: QuestineColors.SKY_100,
                             borderRadius: 4,
-                            borderWidth: 4,
+                            borderWidth: 3,
                           }}
                           resizeMode='contain'
                         />
