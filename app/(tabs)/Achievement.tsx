@@ -40,8 +40,9 @@ type AchievementProps = {
   achievement_id: number | null;
   title: string | null;
   description: string | null;
-  achieved_at: Date | null;
+  unlocked_at: Date | null;
   icon: null;
+  unlocked_user_count: number;
 };
 
 export default function Award() {
@@ -133,12 +134,19 @@ export default function Award() {
                     <Text style={styles.detailDescription}>{selectedAchievement.description}</Text>
                   </View>
 
+                  {/* 달성한 사용자 수 */}
+                  <View style={styles.userCountContainer}>
+                    <Text style={styles.userCountText}>
+                      총 {selectedAchievement.unlocked_user_count}명이 달성한 업적
+                    </Text>
+                  </View>
+
                   {/* 달성 일자 박스 */}
-                  {selectedAchievement.achieved_at && (
+                  {selectedAchievement.unlocked_at && (
                     <View style={styles.achievedContainer}>
                       <Text style={[styles.achievedLabel]}>달성 일자</Text>
                       <Text style={[styles.achievedDate]}>
-                        {selectedAchievement.achieved_at.toString().slice(0, 10)}
+                        {selectedAchievement.unlocked_at.toString().slice(0, 10)}
                       </Text>
                       <View style={styles.achievedBadge}>
                         <Text style={styles.achievedBadgeText}>최종보상</Text>
@@ -172,7 +180,7 @@ export default function Award() {
                   )}
 
                   {/* 미달성 업적인 경우 */}
-                  {!selectedAchievement.achieved_at && (
+                  {!selectedAchievement.unlocked_at && (
                     <View style={styles.lockedContainer}>
                       <Text style={styles.lockedTitle}>미달성 업적</Text>
                       <Text style={styles.lockedDescription}>
@@ -370,6 +378,23 @@ const styles = StyleSheet.create({
     color: QuestineColors.GRAY_500,
   },
 
+  // 사용자 수 컨테이너
+  userCountContainer: {
+    backgroundColor: QuestineColors.SKY_100,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    marginBottom: 25,
+    alignItems: 'center',
+  },
+
+  userCountText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: QuestineColors.BLUE_500,
+    textAlign: 'center',
+  },
+
   // 달성 컨테이너
   achievedContainer: {
     alignItems: 'center',
@@ -506,7 +531,8 @@ const styles = StyleSheet.create({
   badgeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-around',
+    justifyContent: 'space-evenly',
   },
   badgeItem: {
     width: '30%',
