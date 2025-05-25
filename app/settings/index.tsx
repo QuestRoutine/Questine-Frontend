@@ -91,14 +91,13 @@ export default function Settings() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
     paddingTop: 20,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    padding: 16,
     borderBottomWidth: 1,
   },
   menuItemContent: {

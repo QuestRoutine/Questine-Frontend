@@ -95,7 +95,7 @@ export default function Award() {
   };
 
   return (
-    <ScrollView style={{ flex: 1 }}>
+    <ScrollView>
       <SafeAreaView style={styles.container}>
         <Modal
           isVisible={modalVisible}
@@ -178,20 +178,6 @@ export default function Award() {
                       <Text style={styles.rewardValue}>+100 XP</Text>
                     </View>
                   )}
-
-                  {/* 미달성 업적인 경우 */}
-                  {!selectedAchievement.unlocked_at && (
-                    <View style={styles.lockedContainer}>
-                      <Text style={styles.lockedTitle}>미달성 업적</Text>
-                      <Text style={styles.lockedDescription}>
-                        이 업적을 달성하면 경험치와 특별한 보상을 획득할 수 있습니다.
-                      </Text>
-                      <View style={styles.lockedReward}>
-                        <Text style={styles.lockedRewardLabel}>달성 시 보상</Text>
-                        <Text style={styles.lockedRewardValue}>+50 XP</Text>
-                      </View>
-                    </View>
-                  )}
                 </View>
               )}
             </ScrollView>
@@ -235,52 +221,18 @@ export default function Award() {
                     <View style={[styles.badgeIcon, { backgroundColor: colors.icon + '20' }]}>
                       <Text style={[styles.badgeEmoji, { opacity: 0.5 }]}>{item.icon || '🍭'}</Text>
                     </View>
-                    <Text style={[styles.badgeName, { color: colors.icon }]} numberOfLines={1}>
+                    <Text style={[styles.badgeName, { color: colors.icon }]} numberOfLines={2}>
                       {item.title}
                     </Text>
-                    <Text style={[styles.badgeDesc, { color: colors.icon + '80' }]} numberOfLines={2}>
-                      {item.description}
+                    <Text style={[styles.badgeDesc, { color: colors.icon }]} numberOfLines={2}>
+                      🔒
                     </Text>
                   </TouchableOpacity>
                 )
             )}
           </View>
         </View>
-        {/* 진척도 섹션 */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>진척도</Text>
-          {ACHIEVEMENTS.map((achievement) => (
-            <View key={achievement.id} style={styles.achievementItem}>
-              <View style={styles.achievementHeader}>
-                <View style={[styles.achievementIcon, { backgroundColor: colors.tint + '20' }]}>
-                  <Text style={styles.achievementEmoji}>{achievement.icon}</Text>
-                </View>
-                <View style={styles.achievementInfo}>
-                  <Text style={[styles.achievementTitle, { color: colors.text }]}>{achievement.title}</Text>
-                  <View style={styles.achievementProgress}>
-                    <View style={styles.achievementBarBg}>
-                      <View
-                        style={[
-                          styles.achievementBarFill,
-                          {
-                            width: `${(achievement.progress / achievement.maxProgress) * 100}%`,
-                            backgroundColor: colors.tint,
-                          },
-                        ]}
-                      />
-                    </View>
-                    <Text style={[styles.achievementProgressText, { color: colors.text }]}>
-                      {achievement.progress}/{achievement.maxProgress}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <View style={styles.achievementReward}>
-                <Text style={[styles.achievementRewardText, { color: colors.tint }]}>+{achievement.reward} XP</Text>
-              </View>
-            </View>
-          ))}
-        </View>
+
         {/* 하단 여백 */}
         <View style={styles.bottomPadding} />
       </SafeAreaView>
@@ -495,8 +447,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   container: {
-    flex: 1,
     marginHorizontal: 20,
+    marginBottom: 100,
   },
   levelSection: {
     marginBottom: 24,
@@ -527,18 +479,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   section: {
-    marginBottom: 24,
+    marginVertical: 24,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
   },
   badgeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    // justifyContent: 'space-around',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-around',
   },
   badgeItem: {
     width: '30%',
@@ -624,6 +575,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   bottomPadding: {
-    height: 30,
+    height: 0,
   },
 });

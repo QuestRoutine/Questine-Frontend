@@ -165,52 +165,6 @@ export default function Profile() {
             </View>
           </View>
         </View>
-
-        {/* 뱃지 섹션 */}
-        <View style={[styles.card, { backgroundColor: colors.background, marginBottom: 16 }]}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>획득한 뱃지</Text>
-            <TouchableOpacity>
-              <Text style={[styles.seeAllButton, { color: '#FF8DA1' }]}>모두 보기</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.badgeGrid}>
-            {unlockedBadges.map((badge) => (
-              <View key={badge.id} style={styles.badgeItem}>
-                <View style={[styles.badgeIcon, { backgroundColor: '#FF8DA1' + '20' }]}>
-                  <Text style={styles.badgeEmoji}>{badge.icon}</Text>
-                </View>
-                <Text style={[styles.badgeName, { color: colors.text }]} numberOfLines={1}>
-                  {badge.title}
-                </Text>
-              </View>
-            ))}
-            {unlockedBadges.length === 0 && (
-              <Text style={[styles.emptyText, { color: colors.icon }]}>아직 획득한 뱃지가 없습니다</Text>
-            )}
-          </View>
-
-          <View style={[styles.divider, { backgroundColor: colors.icon + '20' }]} />
-
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>도전 가능한 뱃지</Text>
-          </View>
-          <View style={styles.badgeGrid}>
-            {lockedBadges.map((badge) => (
-              <View key={badge.id} style={styles.badgeItem}>
-                <View style={[styles.badgeIcon, { backgroundColor: colors.icon + '20' }]}>
-                  <Text style={[styles.badgeEmoji, { opacity: 0.5 }]}>{badge.icon}</Text>
-                </View>
-                <Text style={[styles.badgeName, { color: colors.icon }]} numberOfLines={1}>
-                  {badge.title}
-                </Text>
-              </View>
-            ))}
-            {lockedBadges.length === 0 && (
-              <Text style={[styles.emptyText, { color: colors.icon }]}>모든 뱃지를 획득했습니다!</Text>
-            )}
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
