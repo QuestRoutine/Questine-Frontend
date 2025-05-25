@@ -40,6 +40,7 @@ type AchievementProps = {
   achievement_id: number | null;
   title: string | null;
   description: string | null;
+  is_unlocked: boolean;
   unlocked_at: Date | null;
   icon: null;
   unlocked_user_count: number;
@@ -72,7 +73,6 @@ export default function Award() {
       } = await axiosInstance.get('/achievements/user', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      // console.log(data);
       setAchievements(data);
       return data;
     };
@@ -153,7 +153,7 @@ export default function Award() {
                       </View>
                       <View style={styles.rewardSection}>
                         <Image
-                          source={require('@/assets/potion.png')}
+                          source={require('@/assets/sword.png')}
                           style={{
                             width: 64,
                             height: 64,
@@ -164,7 +164,7 @@ export default function Award() {
                           resizeMode='contain'
                         />
                         <Image
-                          source={require('@/assets/potion2.png')}
+                          source={require('@/assets/iron_sword.png')}
                           style={{
                             width: 64,
                             height: 64,
@@ -202,42 +202,48 @@ export default function Award() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>획득한 업적</Text>
           <View style={styles.badgeGrid}>
-            {achievements.map((item: AchievementProps) => (
-              <TouchableOpacity
-                key={item.achievement_id}
-                style={styles.badgeItem}
-                onPress={() => handleAchievementPress(item)}
-              >
-                <View style={[styles.badgeIcon, { backgroundColor: colors.tint + '20' }]}>
-                  <Text style={styles.badgeEmoji}>{item.icon || '🍭'}</Text>
-                </View>
-                <Text style={[styles.badgeName, { color: colors.text }]} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text style={[styles.badgeDesc, { color: colors.icon }]} numberOfLines={2}>
-                  {item.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {achievements.map(
+              (item: AchievementProps) =>
+                item.is_unlocked && (
+                  <TouchableOpacity
+                    key={item.achievement_id}
+                    style={styles.badgeItem}
+                    onPress={() => handleAchievementPress(item)}
+                  >
+                    <View style={[styles.badgeIcon, { backgroundColor: colors.tint + '20' }]}>
+                      <Text style={styles.badgeEmoji}>{item.icon || '🍭'}</Text>
+                    </View>
+                    <Text style={[styles.badgeName, { color: colors.text }]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    <Text style={[styles.badgeDesc, { color: colors.icon }]} numberOfLines={2}>
+                      {item.description}
+                    </Text>
+                  </TouchableOpacity>
+                )
+            )}
           </View>
         </View>
         {/* 잠긴 업적 섹션 */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>미달성 업적</Text>
           <View style={styles.badgeGrid}>
-            {achievements.map((badge) => (
-              <TouchableOpacity key={badge.achievement_id} style={styles.badgeItem}>
-                <View style={[styles.badgeIcon, { backgroundColor: colors.icon + '20' }]}>
-                  <Text style={[styles.badgeEmoji, { opacity: 0.5 }]}>{badge.icon || '🍭'}</Text>
-                </View>
-                <Text style={[styles.badgeName, { color: colors.icon }]} numberOfLines={1}>
-                  {badge.title}
-                </Text>
-                <Text style={[styles.badgeDesc, { color: colors.icon + '80' }]} numberOfLines={2}>
-                  {badge.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {achievements.map(
+              (item: AchievementProps) =>
+                !item.is_unlocked && (
+                  <TouchableOpacity key={item.achievement_id} style={styles.badgeItem}>
+                    <View style={[styles.badgeIcon, { backgroundColor: colors.icon + '20' }]}>
+                      <Text style={[styles.badgeEmoji, { opacity: 0.5 }]}>{item.icon || '🍭'}</Text>
+                    </View>
+                    <Text style={[styles.badgeName, { color: colors.icon }]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    <Text style={[styles.badgeDesc, { color: colors.icon + '80' }]} numberOfLines={2}>
+                      {item.description}
+                    </Text>
+                  </TouchableOpacity>
+                )
+            )}
           </View>
         </View>
         {/* 진척도 섹션 */}
