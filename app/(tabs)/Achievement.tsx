@@ -70,7 +70,7 @@ export default function Award() {
       const accessToken = await getSecureStore('accessToken');
       const {
         data: { data },
-      } = await axiosInstance.get('/achievements/user', {
+      } = await axiosInstance.get('/achievements', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setAchievements(data);
