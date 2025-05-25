@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { CalendarList, DateData } from 'react-native-calendars';
 import { Colors } from '@/constants/Colors';
@@ -103,7 +104,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchData();
-  }, [isFocused]);
+  }, []);
 
   // 모든 날짜의 마커를 할 일 목록에 맞게 업데이트
   const updateAllMarkedDates = () => {
@@ -530,13 +531,18 @@ export default function HomeScreen() {
             {selected ? (
               <View style={styles.todoSection}>
                 <Text style={styles.selectedDateText}>{selected} 할 일</Text>
-
                 <View style={styles.todoInputContainer}>
                   <TextInput
                     style={styles.todoInput}
                     value={newTodo}
                     onChangeText={setNewTodo}
-                    onSubmitEditing={addTodo}
+                    onSubmitEditing={() => {
+                      if (!newTodo.trim()) {
+                        Keyboard.dismiss();
+                        return;
+                      }
+                      addTodo();
+                    }}
                     submitBehavior='submit'
                     placeholder='새로운 할 일을 입력하세요'
                     placeholderTextColor='#888'
