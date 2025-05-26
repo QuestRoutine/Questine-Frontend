@@ -96,7 +96,11 @@ export default function HomeScreen() {
 
       setTodos(fetchedTodos);
     } catch (error) {
-      console.error('할 일 목록 불러오기 실패:', error);
+      Toast.show({
+        type: 'error',
+        text1: '오류',
+        text2: '할 일 목록을 불러오는 데 실패했습니다.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -192,7 +196,11 @@ export default function HomeScreen() {
       setNewTodo('');
       await fetchData();
     } catch (error) {
-      console.error('할 일 추가 실패:', error);
+      Toast.show({
+        type: 'error',
+        text1: '오류',
+        text2: '할 일을 추가하는 데 실패했습니다.',
+      });
     }
   };
 
@@ -254,7 +262,11 @@ export default function HomeScreen() {
       }
     } catch (error) {
       setTodos(todos);
-      console.error('할 일 완료 상태 변경 실패:', error);
+      Toast.show({
+        type: 'error',
+        text1: '오류',
+        text2: '할 일 완료 상태를 변경하는 데 실패했습니다.',
+      });
     }
   };
 
@@ -268,7 +280,11 @@ export default function HomeScreen() {
       });
       setTodos((prev) => prev.filter((todo) => todo.todo_id !== todo_id));
     } catch (error) {
-      console.error('할 일 삭제 실패:', error);
+      Toast.show({
+        type: 'error',
+        text1: '오류',
+        text2: '할 일을 삭제하는 데 실패했습니다.',
+      });
     }
   };
 
