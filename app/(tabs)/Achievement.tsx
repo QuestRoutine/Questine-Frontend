@@ -41,7 +41,7 @@ type AchievementProps = {
   title: string | null;
   description: string | null;
   is_unlocked: boolean;
-  unlocked_at: Date | null;
+  unlocked_at: string | null;
   icon: null;
   unlocked_user_count: number;
 };
@@ -261,10 +261,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 5,
   },
-  modalHeader: {
-    width: 50,
-  },
-
   // 업적 상세
   fullScreenContent: {
     flexGrow: 1,
@@ -277,14 +273,12 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     width: '100%',
   },
-
   // 업적 아이콘 래퍼
   detailBadgeIconWrapper: {
     position: 'relative',
     marginBottom: 24,
     zIndex: 1,
   },
-
   // 업적 아이콘 스타일 업데이트
   detailBadgeIcon: {
     width: 140,
@@ -296,14 +290,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 35,
   },
-
   detailBadgeEmoji: {
     fontSize: 60,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 5,
   },
-
   // 제목 프레임
   titleContainer: {
     padding: 12,
@@ -314,13 +306,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
-
   detailTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
   },
-
   // 업적 상세 설명
   achievementDescription: {
     width: '90%',
@@ -328,14 +318,12 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 25,
   },
-
   detailDescription: {
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
     color: QuestineColors.GRAY_500,
   },
-
   // 사용자 수 컨테이너
   userCountContainer: {
     backgroundColor: QuestineColors.SKY_100,
@@ -345,20 +333,17 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     alignItems: 'center',
   },
-
   userCountText: {
     fontSize: 14,
     fontWeight: '500',
     color: QuestineColors.BLUE_500,
     textAlign: 'center',
   },
-
   // 달성 컨테이너
   achievedContainer: {
     alignItems: 'center',
     padding: 20,
   },
-
   // 달성 뱃지
   achievedBadge: {
     backgroundColor: QuestineColors.BLUE_300,
@@ -367,31 +352,26 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
   },
-
   achievedBadgeText: {
     fontWeight: 'bold',
     fontSize: 14,
   },
-
   achievedLabel: {
     fontSize: 14,
     marginTop: 10,
     marginBottom: 5,
   },
-
   achievedDate: {
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 15,
   },
-
   // 보상 섹션
   rewardSection: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
   },
-
   rewardValue: {
     fontSize: 18,
     marginTop: 15,
@@ -405,78 +385,9 @@ const styles = StyleSheet.create({
     left: 10,
     zIndex: 999,
   },
-  // 미달성 업적 스타일
-  lockedContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-    padding: 20,
-    width: '90%',
-    borderRadius: 15,
-    borderWidth: 1,
-  },
-
-  lockedTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-
-  lockedDescription: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 15,
-    lineHeight: 20,
-  },
-
-  lockedReward: {
-    marginTop: 10,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  lockedRewardLabel: {
-    fontSize: 14,
-  },
-
-  lockedRewardValue: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
   container: {
     marginHorizontal: 20,
     marginBottom: 100,
-  },
-  levelSection: {
-    marginBottom: 24,
-    alignItems: 'center',
-  },
-  levelTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  expContainer: {
-    width: '100%',
-    marginBottom: 16,
-  },
-  expBarBg: {
-    height: 12,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  expBarFill: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  expText: {
-    textAlign: 'center',
-    marginTop: 8,
-    fontSize: 12,
   },
   section: {
     marginVertical: 24,
@@ -516,63 +427,6 @@ const styles = StyleSheet.create({
   badgeDesc: {
     fontSize: 12,
     textAlign: 'center',
-  },
-  achievementItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  achievementHeader: {
-    flexDirection: 'row',
-    flex: 1,
-  },
-  achievementIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  achievementEmoji: {
-    fontSize: 20,
-  },
-  achievementInfo: {
-    flex: 1,
-  },
-  achievementTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  achievementProgress: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  achievementBarBg: {
-    height: 8,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 4,
-    overflow: 'hidden',
-    flex: 1,
-    marginRight: 8,
-  },
-  achievementBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  achievementProgressText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  achievementReward: {
-    marginLeft: 12,
-  },
-  achievementRewardText: {
-    fontWeight: 'bold',
   },
   bottomPadding: {
     height: 0,

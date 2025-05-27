@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,11 +13,11 @@ import {
   Modal,
   Alert,
 } from 'react-native';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { StatusBar } from 'expo-status-bar';
 import { UserCharacter, Item, EquippedItems, CharacterImageType } from '@/types/character';
-import { Colors } from '@/constants/Colors';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Colors, QuestineColors } from '@/constants/Colors';
+import axiosInstance from '@/api/axios';
+import { getSecureStore } from '@/utils/secureStore';
+import { useIsFocused } from '@react-navigation/native';
 
 const MOCK_USER: UserCharacter = {
   level: 1,
@@ -93,6 +93,14 @@ const SHOP_ITEMS: Item[] = [
   },
 ];
 
+const GRID_HORIZONTAL_PADDING = 16;
+const GRID_ITEM_MARGIN = 6; // msShopGridItem marginHorizontal
+const GRID_NUM_COLUMNS = 3;
+const GRID_ITEM_WIDTH = Math.floor(
+  (Dimensions.get('window').width - GRID_HORIZONTAL_PADDING * 2 - GRID_ITEM_MARGIN * 2 * GRID_NUM_COLUMNS) /
+    GRID_NUM_COLUMNS
+);
+
 // 현재 장착한 아이템
 const INITIAL_EQUIPPED_ITEMS: EquippedItems = {
   weapon: null,
@@ -111,7 +119,34 @@ const ITEM_CATEGORIES = [
 
 const colors = Colors['light'];
 
+type levelProps = {
+  level: number;
+  exp: number;
+  nextLevelExp: number;
+  gold: number;
+  remaining_exp: number;
+  character_name: string;
+};
+
 export default function CharacterScreen() {
+  const isFocused = useIsFocused();
+  const [characterInfo, setCharacterInfo] = useState<levelProps | null>(null);
+  useEffect(() => {
+    if (!isFocused) return;
+    const fetchData = async () => {
+      const accessToken = await getSecureStore('accessToken');
+      const {
+        data: { data },
+      } = await axiosInstance.get(`/characters/me`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      setCharacterInfo(data);
+      console.log(characterInfo);
+    };
+    fetchData();
+  }, [isFocused]);
   const textColor = colors.text;
   const cardBgColor = '#fff';
   const accentColor = colors.tint;
@@ -246,100 +281,76 @@ export default function CharacterScreen() {
 
   const stats = calculateStats();
 
+  // 상점 아이템 중 NEW 표시할 id 예시
+  const NEW_ITEM_IDS = ['1', '2'];
+
   const renderShopItem = ({ item }: { item: Item }) => {
     const isOwned = inventory.includes(item.id);
     const isEquipped = equippedItems[item.type as keyof EquippedItems] === item.id;
     const canBuy = MOCK_USER.level >= item.requiredLevel;
-
-    const animatePress = () => {
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 0.95,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    };
+    const isNew = NEW_ITEM_IDS.includes(item.id);
 
     return (
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-        <TouchableOpacity
-          style={[styles.msShopItemCard, isEquipped && { borderColor: '#4CAF50', borderWidth: 3 }]}
-          onLongPress={() => setShowItemDetails(item)}
-          onPress={animatePress}
-          activeOpacity={0.8}
-        >
-          <View style={styles.msShopItemLeft}>
-            <View style={[styles.msShopItemImageCircle, isEquipped && { borderColor: '#4CAF50' }]}>
-              <Image source={item.image} style={styles.msShopItemImage} />
-              {isEquipped && (
-                <View style={styles.equippedBadge}>
-                  <Text style={styles.equippedBadgeText}>✓</Text>
-                </View>
-              )}
-            </View>
+      <View style={styles.msShopGridItem}>
+        {/* NEW */}
+        {isNew && (
+          <View style={styles.msShopNewBadge}>
+            <Text style={styles.msShopNewBadgeText}>NEW</Text>
           </View>
-          <View style={styles.msShopItemInfo}>
-            <Text style={[styles.msShopItemName, isEquipped && { color: '#4CAF50' }]}>{item.name}</Text>
-            <Text style={styles.msShopItemDesc}>{item.description}</Text>
-            <View style={styles.msShopItemStatsRow}>
-              {item.stats?.attack && (
-                <View style={[styles.msShopStatBadge, { backgroundColor: '#FFE066' }]}>
-                  <Text style={styles.statBadgeText}>⚔️ +{item.stats.attack}</Text>
-                </View>
-              )}
-              {item.stats?.defense && (
-                <View style={[styles.msShopStatBadge, { backgroundColor: '#B2F2FF' }]}>
-                  <Text style={styles.statBadgeText}>🛡️ +{item.stats.defense}</Text>
-                </View>
-              )}
-              {item.stats?.health && (
-                <View style={[styles.msShopStatBadge, { backgroundColor: '#FFD6E0' }]}>
-                  <Text style={styles.statBadgeText}>❤️ +{item.stats.health}</Text>
-                </View>
-              )}
-              {item.effect && (
-                <View style={[styles.msShopStatBadge, { backgroundColor: '#E6FCF5' }]}>
-                  <Text style={[styles.statBadgeText, { color: '#333' }]}>{item.effect}</Text>
-                </View>
-              )}
+        )}
+        <View style={styles.msShopGridImageWrapper}>
+          <Image source={item.image} style={styles.msShopGridImage} resizeMode='contain' />
+          {isEquipped && (
+            <View style={styles.msShopEquippedMark}>
+              <Text style={styles.msShopEquippedMarkText}>E</Text>
             </View>
-            {!canBuy && <Text style={styles.msShopLevelReq}>🔒 Lv.{item.requiredLevel} 필요</Text>}
+          )}
+        </View>
+        <Text style={styles.msShopGridName} numberOfLines={1}>
+          {item.name}
+        </Text>
+
+        {/* 스탯/효과 */}
+        {item.stats && (
+          <View style={styles.msShopGridStatsRow}>
+            {Object.entries(item.stats).map(([key, value]) => (
+              <View key={key} style={styles.msShopGridStatBadge}>
+                <Text style={styles.msShopGridStatBadgeText}>
+                  {key === 'attack' && '⚔️'}
+                  {key === 'defense' && '🛡️'}
+                  {key === 'health' && '❤️'} {value}
+                </Text>
+              </View>
+            ))}
           </View>
-          <View style={styles.msShopItemActions}>
-            <View style={styles.msShopPriceBadge}>
-              <Text style={styles.msShopPriceText}>💰 {item.price}</Text>
-            </View>
-            {!isOwned ? (
-              <TouchableOpacity
-                style={[
-                  styles.msShopBuyBtn,
-                  {
-                    opacity: canBuy && gold >= item.price ? 1 : 0.5,
-                    backgroundColor: canBuy && gold >= item.price ? '#FF6B95' : '#999',
-                  },
-                ]}
-                onPress={() => buyItem(item)}
-                disabled={!canBuy || gold < item.price}
-              >
-                <Text style={styles.msShopBuyBtnText}>{!canBuy ? '🔒' : gold < item.price ? '💸' : '구매'}</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.msShopEquipBtn, { backgroundColor: isEquipped ? '#4CAF50' : '#667eea' }]}
-                onPress={() => equipItem(item)}
-              >
-                <Text style={styles.msShopBuyBtnText}>{isEquipped ? '✓ 장착됨' : '⚡ 장착'}</Text>
-              </TouchableOpacity>
-            )}
+        )}
+        {item.effect && <Text style={styles.msShopGridEffect}>{item.effect}</Text>}
+        {/* 레벨 제한 */}
+        {item.requiredLevel > 1 && <Text style={styles.msShopGridLevelReq}>Lv.{item.requiredLevel} 이상</Text>}
+        {/* 가격/버튼 */}
+        <View style={styles.msShopGridBottomRow}>
+          <View style={styles.msShopGridPriceBadge}>
+            <Text style={styles.msShopGridPriceText}>💰 {item.price}</Text>
           </View>
-        </TouchableOpacity>
-      </Animated.View>
+          {isOwned ? (
+            <TouchableOpacity
+              style={[styles.msShopGridBtn, isEquipped ? styles.msShopGridBtnEquipped : styles.msShopGridBtnEquip]}
+              disabled={isEquipped}
+              onPress={() => equipItem(item)}
+            >
+              <Text style={styles.msShopGridBtnText}>{isEquipped ? '장착중' : '장착'}</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[styles.msShopGridBtn, !canBuy && styles.msShopGridBtnDisabled]}
+              disabled={!canBuy}
+              onPress={() => buyItem(item)}
+            >
+              <Text style={styles.msShopGridBtnText}>구매</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
     );
   };
 
@@ -385,23 +396,13 @@ export default function CharacterScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style='auto' />
-      <LinearGradient
-        colors={['#fbcfe8', '#c084fc', '#fecdd3']}
-        // colors={['#667eea', '#a5f3fc', '#8b5cf6']}
-        // colors={['#667eea', '#764ba2', '#60a5fa']}
-        style={styles.backgroundGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-
       <View style={styles.header}>
         <Animated.View style={{ transform: [{ scale: 1 }] }}>
-          <Text style={[styles.title, { color: '#fff' }]}>✨ 캐릭터 ✨</Text>
+          <Text style={styles.title}>✨ 캐릭터 ✨</Text>
         </Animated.View>
         <Animated.View style={[styles.goldContainer, { transform: [{ scale: goldAnim }] }]}>
           <Text style={styles.goldIcon}>💰</Text>
-          <Text style={[styles.gold, { color: '#fff' }]}>{gold}</Text>
+          <Text style={styles.gold}>{gold}</Text>
         </Animated.View>
       </View>
 
@@ -411,18 +412,14 @@ export default function CharacterScreen() {
           onPress={() => switchTab('character')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, { color: activeTab === 'character' ? '#667eea' : 'rgba(255,255,255,0.7)' }]}>
-            🧙‍♂️ 캐릭터
-          </Text>
+          <Text style={[styles.tabText, { color: activeTab === 'character' ? '#667eea' : '#000' }]}>🧙‍♂️ 캐릭터</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'shop' && styles.activeTab]}
           onPress={() => switchTab('shop')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, { color: activeTab === 'shop' ? '#667eea' : 'rgba(255,255,255,0.7)' }]}>
-            🛒 상점
-          </Text>
+          <Text style={[styles.tabText, { color: activeTab === 'shop' ? '#667eea' : '#000' }]}>🛒 상점</Text>
         </TouchableOpacity>
       </View>
 
@@ -437,93 +434,119 @@ export default function CharacterScreen() {
                 <Image source={getCharacterImage()} style={styles.msAvatarImage} resizeMode='cover' />
               </View>
             </View>
+            {/* 닉네임 */}
+            <Text numberOfLines={1} style={styles.msNickname}>
+              {characterInfo?.character_name}
+            </Text>
+            {/* 레벨 */}
             <View style={styles.msBadgesRow}>
-              <View style={[styles.msBadge, { backgroundColor: '#ffe066' }]}>
-                <Text style={styles.msBadgeText}>Lv.{MOCK_USER.level}</Text>
-              </View>
-              <View style={[styles.msBadge, { backgroundColor: '#b2f2ff' }]}>
-                <Text style={styles.msBadgeText}>💰 {gold}</Text>
+              <View style={[styles.msBadge, { backgroundColor: QuestineColors.SKY_300 }]}>
+                <Text style={styles.msBadgeText}>Lv.{characterInfo?.level ?? 1}</Text>
               </View>
             </View>
+            {/* 경험치바 */}
             <View style={styles.msExpBarWrapper}>
               <View style={styles.msExpBarBg}>
-                <View style={[styles.msExpBarFill, { width: `${(MOCK_USER.exp / MOCK_USER.nextLevelExp) * 100}%` }]} />
+                <View
+                  style={[
+                    styles.msExpBarFill,
+                    {
+                      width: `${((characterInfo?.exp ?? 0) / (characterInfo?.nextLevelExp ?? 1)) * 100}%`,
+                      backgroundColor: '#ffe066',
+                    },
+                  ]}
+                />
               </View>
               <Text style={styles.msExpBarText}>
-                EXP {MOCK_USER.exp} / {MOCK_USER.nextLevelExp}
+                {characterInfo?.exp} / {characterInfo?.nextLevelExp} EXP
               </Text>
             </View>
           </View>
 
           {/* 능력치 카드 */}
           <View style={styles.msStatsRow}>
-            <View style={[styles.msStatMiniCard, { backgroundColor: '#fffbe6', shadowColor: '#ffe066' }]}>
-              <Text style={styles.msStatIcon}>❤️</Text>
-              <Text style={styles.msStatValue}>{stats.health}</Text>
-              <Text style={styles.msStatLabel}>체력</Text>
+            {/* 체력 */}
+            <View style={styles.statSlotBox}>
+              <View style={[styles.statSlotBg, { borderColor: '#ffd6e0', shadowColor: '#ffd6e0' }]}>
+                <Text style={styles.statSlotIcon}>❤️</Text>
+                <Text style={styles.statSlotValue}>{stats.health}</Text>
+              </View>
+              <Text style={styles.statSlotLabel}>체력</Text>
             </View>
-            <View style={[styles.msStatMiniCard, { backgroundColor: '#e6fcf5', shadowColor: '#63e6be' }]}>
-              <Text style={styles.msStatIcon}>⚔️</Text>
-              <Text style={styles.msStatValue}>{stats.attack}</Text>
-              <Text style={styles.msStatLabel}>공격</Text>
+            {/* 공격 */}
+            <View style={styles.statSlotBox}>
+              <View style={[styles.statSlotBg, { borderColor: '#ffe066', shadowColor: '#ffe066' }]}>
+                <Text style={styles.statSlotIcon}>⚔️</Text>
+                <Text style={styles.statSlotValue}>{stats.attack}</Text>
+              </View>
+              <Text style={styles.statSlotLabel}>공격</Text>
             </View>
-            <View style={[styles.msStatMiniCard, { backgroundColor: '#e7f5ff', shadowColor: '#339af0' }]}>
-              <Text style={styles.msStatIcon}>🛡️</Text>
-              <Text style={styles.msStatValue}>{stats.defense}</Text>
-              <Text style={styles.msStatLabel}>방어</Text>
+            {/* 방어 */}
+            <View style={styles.statSlotBox}>
+              <View style={[styles.statSlotBg, { borderColor: '#b2f2ff', shadowColor: '#b2f2ff' }]}>
+                <Text style={styles.statSlotIcon}>🛡️</Text>
+                <Text style={styles.statSlotValue}>{stats.defense}</Text>
+              </View>
+              <Text style={styles.statSlotLabel}>방어</Text>
             </View>
           </View>
 
-          <View style={[styles.msEquipmentCard, { backgroundColor: '#fff' }]}>
+          {/* 장착 장비 카드 영역 */}
+          <View style={styles.msEquipmentCard}>
             <Text style={[styles.msCardTitle, { color: textColor }]}>🎒 장착 장비</Text>
-            <View style={styles.msEquipmentRow}>
-              {/* 무기 */}
-              <View style={styles.msEquipSlotWrapper}>
-                <View style={[styles.msEquipCircle, { backgroundColor: '#ffe066', shadowColor: '#ffe066' }]}>
-                  <Text style={styles.msEquipIcon}>⚔️</Text>
+            <View style={styles.equipGridContainer}>
+              {/* 무기 슬롯 */}
+              <View style={styles.equipSlotBox}>
+                <View style={styles.equipSlotBg}>
+                  {equippedItems.weapon ? (
+                    <Image
+                      source={SHOP_ITEMS.find((i) => i.id === equippedItems.weapon)?.image}
+                      style={styles.equipItemImage}
+                      resizeMode='contain'
+                    />
+                  ) : (
+                    <Text style={styles.equipSlotEmpty}>⚔️</Text>
+                  )}
                 </View>
-                <Text style={styles.msEquipLabel}>무기</Text>
-                {equippedItems.weapon ? (
-                  <Text style={styles.msEquipName}>{SHOP_ITEMS.find((i) => i.id === equippedItems.weapon)?.name}</Text>
-                ) : (
-                  <Text style={styles.msEquipEmpty}>미장착</Text>
-                )}
+                <Text style={styles.equipSlotLabel}>무기</Text>
               </View>
-              {/* 방패 */}
-              <View style={styles.msEquipSlotWrapper}>
-                <View style={[styles.msEquipCircle, { backgroundColor: '#b2f2ff', shadowColor: '#b2f2ff' }]}>
-                  <Text style={styles.msEquipIcon}>🛡️</Text>
+              {/* 방패 슬롯 */}
+              <View style={styles.equipSlotBox}>
+                <View style={styles.equipSlotBg}>
+                  {equippedItems.shield ? (
+                    <Image
+                      source={SHOP_ITEMS.find((i) => i.id === equippedItems.shield)?.image}
+                      style={styles.equipItemImage}
+                      resizeMode='contain'
+                    />
+                  ) : (
+                    <Text style={styles.equipSlotEmpty}>🛡️</Text>
+                  )}
                 </View>
-                <Text style={styles.msEquipLabel}>방패</Text>
-                {equippedItems.shield ? (
-                  <Text style={styles.msEquipName}>{SHOP_ITEMS.find((i) => i.id === equippedItems.shield)?.name}</Text>
-                ) : (
-                  <Text style={styles.msEquipEmpty}>미장착</Text>
-                )}
+                <Text style={styles.equipSlotLabel}>방패</Text>
               </View>
-              {/* 갑옷 */}
-              <View style={styles.msEquipSlotWrapper}>
-                <View style={[styles.msEquipCircle, { backgroundColor: '#ffd6e0', shadowColor: '#ffd6e0' }]}>
-                  <Text style={styles.msEquipIcon}>👕</Text>
+              {/* 갑옷 슬롯 */}
+              <View style={styles.equipSlotBox}>
+                <View style={styles.equipSlotBg}>
+                  {equippedItems.armor ? (
+                    <Image
+                      source={SHOP_ITEMS.find((i) => i.id === equippedItems.armor)?.image}
+                      style={styles.equipItemImage}
+                      resizeMode='contain'
+                    />
+                  ) : (
+                    <Text style={styles.equipSlotEmpty}>👕</Text>
+                  )}
                 </View>
-                <Text style={styles.msEquipLabel}>갑옷</Text>
-                {equippedItems.armor ? (
-                  <Text style={styles.msEquipName}>{SHOP_ITEMS.find((i) => i.id === equippedItems.armor)?.name}</Text>
-                ) : (
-                  <Text style={styles.msEquipEmpty}>미장착</Text>
-                )}
+                <Text style={styles.equipSlotLabel}>갑옷</Text>
               </View>
             </View>
           </View>
         </ScrollView>
       ) : (
         <View style={styles.shopContainer}>
-          <ScrollView
-            horizontal
-            style={styles.categoriesContainer}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesContent}
-          >
+          {/* 카테고리 바 */}
+          <View style={styles.categoriesBarCenter}>
             {ITEM_CATEGORIES.map((category) => (
               <TouchableOpacity
                 key={category.id}
@@ -536,27 +559,21 @@ export default function CharacterScreen() {
                     selectedCategory === category.id && styles.categoryButtonTextActive,
                   ]}
                 >
-                  {category.id === 'weapon'
-                    ? '⚔️ '
-                    : category.id === 'armor'
-                    ? '👕 '
-                    : category.id === 'shield'
-                    ? '🛡️ '
-                    : category.id === 'consumable'
-                    ? '🧪 '
-                    : '🎁 '}
                   {category.name}
                 </Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
-
+          </View>
           <FlatList
             data={SHOP_ITEMS.filter((item) => selectedCategory === 'all' || item.type === selectedCategory)}
             renderItem={renderShopItem}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.shopList}
             showsVerticalScrollIndicator={false}
+            numColumns={GRID_NUM_COLUMNS}
+            contentContainerStyle={{
+              paddingHorizontal: GRID_HORIZONTAL_PADDING,
+              paddingBottom: 20,
+            }}
           />
         </View>
       )}
@@ -567,13 +584,6 @@ export default function CharacterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  backgroundGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
   },
   header: {
     flexDirection: 'row',
@@ -586,9 +596,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
   goldContainer: {
     flexDirection: 'row',
@@ -610,9 +617,6 @@ const styles = StyleSheet.create({
   gold: {
     fontSize: 18,
     fontWeight: 'bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
   },
   tabs: {
     flexDirection: 'row',
@@ -631,7 +635,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   activeTab: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -644,10 +648,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   content: {
-    flex: 1,
     paddingHorizontal: 20,
   },
-
   // Character Card Styles
   msCharacterCard: {
     borderRadius: 30,
@@ -661,7 +663,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 20,
     elevation: 10,
-    backgroundColor: '#fff',
   },
   msAvatarWrapper: {
     marginBottom: 15,
@@ -686,6 +687,13 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
   },
+  msNickname: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#667eea',
+    textAlign: 'center',
+    margin: 'auto',
+  },
   msBadgesRow: {
     flexDirection: 'row',
     gap: 12,
@@ -702,6 +710,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
+    backgroundColor: QuestineColors.SKY_300,
   },
   msBadgeText: {
     fontWeight: 'bold',
@@ -738,7 +747,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-
   // Stats Cards
   msStatsRow: {
     flexDirection: 'row',
@@ -747,35 +755,41 @@ const styles = StyleSheet.create({
     gap: 15,
     marginHorizontal: 5,
   },
-  msStatMiniCard: {
-    flex: 1,
-    borderRadius: 20,
+  statSlotBox: {
     alignItems: 'center',
-    paddingVertical: 20,
-    marginHorizontal: 2,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 6,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    width: 70,
   },
-  msStatIcon: {
-    fontSize: 32,
+  statSlotBg: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: '#f4f4f4',
+    borderWidth: 2.5,
+    borderColor: '#d1d5db',
+    shadowColor: '#bdbdbd',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 6,
   },
-  msStatValue: {
-    fontSize: 24,
+  statSlotIcon: {
+    fontSize: 26,
+    marginBottom: 2,
+  },
+  statSlotValue: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#222',
-    marginBottom: 4,
+    color: '#333',
   },
-  msStatLabel: {
-    fontSize: 14,
-    color: '#666',
+  statSlotLabel: {
+    fontSize: 13,
+    color: '#888',
     fontWeight: '600',
+    marginTop: 2,
   },
-
   // Equipment Card
   msEquipmentCard: {
     borderRadius: 25,
@@ -791,257 +805,270 @@ const styles = StyleSheet.create({
     elevation: 8,
     backgroundColor: '#fff',
   },
-  msEquipmentRow: {
+  equipGridContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 15,
-    gap: 12,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    gap: 24,
+    marginTop: 10,
+    marginBottom: 10,
   },
-  msEquipSlotWrapper: {
-    flex: 1,
+  equipSlotBox: {
     alignItems: 'center',
-    marginHorizontal: 4,
+    width: 70,
   },
-  msEquipCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  equipSlotBg: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: '#f4f4f4',
+    borderWidth: 2.5,
+    borderColor: '#d1d5db',
+    shadowColor: '#bdbdbd',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 6,
   },
-  msEquipIcon: {
-    fontSize: 30,
-    color: '#fff',
-    textShadowColor: '#222',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+  equipItemImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
   },
-  msEquipLabel: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  msEquipName: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginTop: 2,
-  },
-  msEquipEmpty: {
-    fontSize: 14,
+  equipSlotEmpty: {
+    fontSize: 28,
     color: '#bbb',
-    fontStyle: 'italic',
+    opacity: 0.4,
+  },
+  equipSlotLabel: {
+    fontSize: 13,
+    color: '#888',
+    fontWeight: '600',
     marginTop: 2,
   },
-  msCardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 18,
-    color: '#333',
-    letterSpacing: 0.5,
-  },
-
   // Shop Styles
   shopContainer: {
     flex: 1,
+    backgroundColor: '#f6f7fa',
   },
-  categoriesContainer: {
-    maxHeight: 55,
-    marginHorizontal: 20,
-    marginBottom: 18,
-  },
-  categoriesContent: {
-    paddingRight: 20,
+  categoriesBarCenter: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginHorizontal: 0,
+    paddingHorizontal: 0,
   },
   categoryButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-    marginRight: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 22,
+    marginHorizontal: 6,
+    backgroundColor: '#e9ecef',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: '#f6f7fa',
   },
   categoryButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#ffe066',
     borderColor: '#ffd43b',
-    shadowColor: '#000',
+    shadowColor: '#ffd43b',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
   },
   categoryButtonText: {
     fontWeight: 'bold',
     fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#888',
   },
   categoryButtonTextActive: {
-    color: '#333',
+    color: '#b19700',
   },
-  shopList: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-
-  // Shop Item Card
-  msShopItemCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 22,
+  msShopGridItem: {
     backgroundColor: '#fff',
-    padding: 18,
-    marginBottom: 20,
-    shadowColor: '#b2f2ff',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 6,
+    borderRadius: 18,
+    marginHorizontal: GRID_ITEM_MARGIN,
+    width: GRID_ITEM_WIDTH,
+    marginVertical: 8,
+    padding: 12,
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#e7eaf6',
+    borderColor: '#e9ecef',
+    shadowColor: '#ffd43b',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.13,
+    shadowRadius: 10,
+    elevation: 5,
+    minHeight: 220,
+    maxHeight: 250,
   },
-  msShopItemLeft: {
-    marginRight: 16,
+  msShopNewBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#FF6B95',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    zIndex: 2,
+    borderWidth: 1,
+    borderColor: '#fff',
+    shadowColor: '#ff4d6d',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  msShopItemImageCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  msShopNewBadgeText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 11,
+    letterSpacing: 0.5,
+    textShadowColor: '#ffb3c6',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
+  msShopGridImageWrapper: {
+    width: 54,
+    height: 54,
+    borderRadius: 12,
     backgroundColor: '#f1f3f5',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
+    marginBottom: 7,
+    marginTop: 7,
+    position: 'relative',
+    borderWidth: 2,
     borderColor: '#ffe066',
     shadowColor: '#ffe066',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-    position: 'relative',
-  },
-  msShopItemImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  equippedBadge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#4CAF50',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  equippedBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  msShopItemInfo: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  msShopItemName: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 3,
-  },
-  msShopItemDesc: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  msShopItemStatsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 6,
-  },
-  msShopStatBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginRight: 4,
-    marginBottom: 3,
-  },
-  statBadgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#555',
-  },
-  msShopLevelReq: {
-    fontSize: 13,
-    color: '#FF4500',
-    fontWeight: 'bold',
-    marginTop: 3,
-  },
-  msShopItemActions: {
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    height: 60,
-    marginLeft: 12,
-  },
-  msShopPriceBadge: {
-    backgroundColor: '#ffe066',
-    borderRadius: 15,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginBottom: 10,
-    alignItems: 'center',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
     elevation: 2,
   },
-  msShopPriceText: {
-    fontWeight: 'bold',
-    color: '#333',
-    fontSize: 14,
+  msShopGridImage: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
   },
-  msShopBuyBtn: {
-    backgroundColor: '#FF6B95',
-    borderRadius: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
+  msShopEquippedMark: {
+    position: 'absolute',
+    bottom: -8,
+    right: -8,
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderWidth: 2,
+    borderColor: '#fff',
+    zIndex: 2,
   },
-  msShopBuyBtnText: {
+  msShopEquippedMarkText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 11,
+  },
+  msShopGridName: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#222',
+    marginBottom: 2,
+    textAlign: 'center',
+    width: '100%',
+  },
+  msShopGridStatsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginBottom: 2,
+    gap: 3,
+  },
+  msShopGridStatBadge: {
+    backgroundColor: '#f1f3f5',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginRight: 2,
+    marginBottom: 2,
+  },
+  msShopGridStatBadgeText: {
+    fontSize: 11,
+    color: '#555',
+    fontWeight: 'bold',
+  },
+  msShopGridEffect: {
+    fontSize: 12,
+    color: '#4dabf7',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  msShopGridLevelReq: {
+    fontSize: 11,
+    color: '#FF4500',
+    fontWeight: 'bold',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  msShopGridBottomRow: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    justifyContent: 'flex-end',
+    width: '100%',
+    marginTop: 6,
+    gap: 0,
+  },
+  msShopGridPriceBadge: {
+    backgroundColor: '#ffe066',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ffd43b',
+    marginBottom: 8,
+    alignSelf: 'center',
+  },
+  msShopGridPriceText: {
+    fontWeight: 'bold',
+    color: '#b19700',
     fontSize: 14,
+    textAlign: 'center',
   },
-  msShopEquipBtn: {
-    borderRadius: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
+  msShopGridBtn: {
+    borderRadius: 10,
+    paddingHorizontal: 0,
+    paddingVertical: 7,
+    alignItems: 'center',
+    backgroundColor: '#FF6B95',
+    borderWidth: 1,
+    borderColor: '#ff4d6d',
   },
-
+  msShopGridBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 13,
+    textShadowColor: '#ffb3c6',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    textAlign: 'center',
+  },
+  msShopGridBtnEquip: {
+    backgroundColor: '#4dabf7',
+    borderColor: '#228be6',
+  },
+  msShopGridBtnEquipped: {
+    backgroundColor: '#bbb',
+    borderColor: '#888',
+  },
+  msShopGridBtnDisabled: {
+    backgroundColor: '#eee',
+    borderColor: '#ccc',
+  },
   // Modal Styles
   modalOverlay: {
     flex: 1,
@@ -1110,5 +1137,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  msCardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 18,
+    color: '#333',
+    letterSpacing: 0.5,
   },
 });

@@ -1,33 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
-import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { getSecureStore } from '@/utils/secureStore';
 import axiosInstance from '@/api/axios';
 import { useIsFocused } from '@react-navigation/native';
-
-// 임시 뱃지 데이터
-const BADGES = [
-  { id: 1, title: '첫 투두 완료', description: '첫 번째 할 일을 완료했어요', isUnlocked: true, icon: '🏆' },
-  {
-    id: 2,
-    title: '연속 3일 달성',
-    description: '연속으로 3일 동안 모든 할 일을 완료했어요',
-    isUnlocked: true,
-    icon: '🔥',
-  },
-  {
-    id: 3,
-    title: '타임 마스터',
-    description: '정해진 시간 내에 10개의 할 일을 완료했어요',
-    isUnlocked: false,
-    icon: '⏰',
-  },
-  { id: 4, title: '집중력 대장', description: '2시간 동안 할 일에 집중했어요', isUnlocked: true, icon: '🧠' },
-  { id: 5, title: '초고수', description: '100개의 할 일을 완료했어요', isUnlocked: false, icon: '⭐' },
-];
 
 // 임시 통계 데이터
 const STATISTICS = {
@@ -39,38 +16,30 @@ const STATISTICS = {
 };
 
 type UserInfo = {
-  user_id: string;
-  email: string;
-  login_type: string;
-  created_at: Date;
-  updated_at: Date;
+  profile_id: number;
+  user_id: number;
   nickname: string;
-  exp: number;
-  gold: number;
-  level: number;
+  avatar_url: string | null;
+  join_date: string;
+  total_completed_tasks: number;
+  current_streak: number;
+  longest_streak: number;
+  weekly_avg_completion: number;
+  most_productive_day: string | null;
+  most_productive_time: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export default function Profile() {
-  const colorScheme = useColorScheme();
   const colors = Colors['light'];
   const isFocused = useIsFocused();
-  const [userInfo, setUserInfo] = useState<UserInfo>({
-    user_id: 'user_id',
-    email: 'email',
-    login_type: 'login_type',
-    created_at: new Date(),
-    updated_at: new Date(),
-    nickname: 'nickname',
-    exp: 0,
-    gold: 0,
-    level: 1,
-  });
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   useEffect(() => {
     if (!isFocused) return;
     const fetchData = async () => {
-      const accessToken = await getSecureStore('accessToken');
-      const { data } = await axiosInstance.get('/auth/me', { headers: { Authorization: `Bearer ${accessToken}` } });
+      const { data } = await axiosInstance.get('/auth/me');
       console.log(data);
       setUserInfo(data);
       return data;
@@ -80,22 +49,14 @@ export default function Profile() {
 
   const router = useRouter();
 
-  // 레벨업에 필요한 경험치 계산
-  const calculateRequiredExp = (currentLevel: number) => {
-    const expPerLevel = 1000;
-    const newLevel = Math.floor(userInfo.exp / expPerLevel) + 1;
-    return newLevel;
+  // 닉네임 변경 버튼 클릭 핸들러
+  const handleChangeNickname = () => {
+    alert('닉네임 변경 기능은 준비 중입니다.');
   };
-
-  const requiredExp = calculateRequiredExp(userInfo.level);
-  const expPercentage = useMemo(() => (userInfo.exp / requiredExp) * 100, [userInfo.exp, requiredExp]);
-
-  const unlockedBadges = useMemo(() => BADGES.filter((badge) => badge.isUnlocked), []);
-  const lockedBadges = useMemo(() => BADGES.filter((badge) => !badge.isUnlocked), []);
 
   // 가입 기간 계산
   const calculateMembershipDuration = () => {
-    const joinDate = new Date(userInfo.created_at);
+    const joinDate = new Date(userInfo?.created_at || '');
     const today = new Date();
     const diffTime = Math.abs(today.getTime() - joinDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -114,13 +75,18 @@ export default function Profile() {
         {/* 프로필 헤더 섹션 */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>{userInfo.nickname.charAt(0)}</Text>
+            <Text style={styles.avatarText}>{userInfo?.nickname.charAt(0)}</Text>
           </View>
           <View style={styles.profileInfo}>
             <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
-              {userInfo.nickname}
+              {userInfo?.nickname}
             </Text>
-            <Text style={[styles.membershipText, { color: colors.icon }]}>{membershipDays}일째 사용 중</Text>
+            <View style={styles.profileInfoRow}>
+              <Text style={[styles.membershipText, { color: colors.icon }]}>{membershipDays}일째 사용 중</Text>
+              <TouchableOpacity style={styles.changeNicknameBtn} onPress={handleChangeNickname}>
+                <Text style={styles.changeNicknameBtnText}>닉네임 변경하기</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* 설정 버튼 */}
@@ -138,15 +104,15 @@ export default function Profile() {
           <Text style={[styles.cardTitle, { color: colors.text }]}>나의 투두 통계</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{STATISTICS.totalCompletedTasks}</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>not yet</Text>
               <Text style={[styles.statLabel, { color: colors.icon }]}>완료한 할 일</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{0}</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{userInfo?.current_streak}</Text>
               <Text style={[styles.statLabel, { color: colors.icon }]}>현재 연속일</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{STATISTICS.longestStreak}</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{userInfo?.longest_streak}</Text>
               <Text style={[styles.statLabel, { color: colors.icon }]}>최장 연속일</Text>
             </View>
             <View style={styles.statItem}>
@@ -261,48 +227,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  sectionHeader: {
+  profileInfoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginTop: 2,
+    marginBottom: 2,
   },
-  seeAllButton: {
-    fontSize: 14,
-    fontWeight: '500',
+  changeNicknameBtn: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginLeft: 8,
   },
-  divider: {
-    height: 1,
-    marginVertical: 16,
-  },
-  badgeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  badgeItem: {
-    width: '20%',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  badgeIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  badgeEmoji: {
-    fontSize: 24,
-  },
-  badgeName: {
+  changeNicknameBtnText: {
     fontSize: 12,
-    textAlign: 'center',
-  },
-  emptyText: {
-    width: '100%',
-    textAlign: 'center',
-    paddingVertical: 16,
-    fontStyle: 'italic',
+    color: '#FF8DA1',
+    fontWeight: 'bold',
   },
 });

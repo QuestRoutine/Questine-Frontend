@@ -24,7 +24,6 @@ export default function Settings() {
 
   const handleLogout = () => {
     console.log('로그아웃');
-    // 로그아웃 처리
     logoutMutation.mutate();
   };
 

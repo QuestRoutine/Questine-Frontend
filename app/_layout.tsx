@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Stack.Screen name='+not-found' />
         </Stack>
         <Toast />
-        <StatusBar style='dark' backgroundColor='transparent' translucent={true} />
+        <StatusBar style='dark' backgroundColor='transparent' />
       </>
     );
   }
