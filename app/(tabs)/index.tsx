@@ -105,10 +105,11 @@ export default function HomeScreen() {
       setIsLoading(false);
     }
   };
-
+  const isFocued = useIsFocused();
   useEffect(() => {
+    if (!isFocused) return;
     fetchData();
-  }, []);
+  }, [isFocued]);
 
   // 모든 날짜의 마커를 할 일 목록에 맞게 업데이트
   const updateAllMarkedDates = () => {
@@ -622,17 +623,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     zIndex: 999,
   },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 300,
-    marginVertical: 20,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 14,
-    color: '#888',
-  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -679,7 +669,6 @@ const styles = StyleSheet.create({
   },
   selectedDayText: {
     fontWeight: 'bold',
-
     color: '#FFF',
   },
   todoIndicator: {
@@ -815,12 +804,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  splitColorSection: {
-    position: 'absolute',
-    height: '100%',
-
-    top: 0,
   },
   bottomPadding: {
     height: 30,
