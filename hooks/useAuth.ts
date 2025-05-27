@@ -2,9 +2,10 @@ import { getAccessToken, getMe, postLogout, postSignin, postSignup } from '@/api
 import queryClient from '@/api/queryClient';
 import { removeHeader, setHeader } from '@/utils/header';
 import { deleteSecureStore, setSecureStore } from '@/utils/secureStore';
-import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
+import Toast from 'react-native-toast-message';
 
 function useGetMe() {
   const { data, isError } = useQuery({
@@ -30,7 +31,11 @@ function useSignup() {
       router.replace('/auth/Login');
     },
     onError: (error) => {
-      console.error('Signup failed:', error);
+      Toast.show({
+        type: 'error',
+        text1: '회원가입 실패',
+        text2: '입력한 정보를 확인해주세요.',
+      });
     },
   });
 }
@@ -39,7 +44,6 @@ function useSignin() {
   return useMutation({
     mutationFn: postSignin,
     onSuccess: async ({ accessToken, refreshToken }) => {
-      console.log('로그인 성공');
       setHeader('Authorization', `Bearer ${accessToken}`);
       await setSecureStore('accessToken', accessToken);
       await setSecureStore('refreshToken', refreshToken);
@@ -48,7 +52,11 @@ function useSignin() {
       router.replace('/(tabs)');
     },
     onError: (error) => {
-      console.error('Signin failed:', error);
+      Toast.show({
+        type: 'error',
+        text1: '로그인 실패',
+        text2: '아이디와 비밀번호를 확인해주세요.',
+      });
     },
   });
 }
@@ -65,7 +73,11 @@ function useLogout() {
       router.replace('/auth/Login');
     },
     onError: (error) => {
-      console.error('Logout failed:', error);
+      Toast.show({
+        type: 'error',
+        text1: '로그아웃 실패',
+        text2: '다시 시도해주세요.',
+      });
     },
   });
 }
