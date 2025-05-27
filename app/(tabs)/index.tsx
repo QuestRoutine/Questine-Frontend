@@ -23,7 +23,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import '@/constants/Calendars';
 import { Check } from 'lucide-react-native';
 import axiosInstance from '@/api/axios';
-import { getSecureStore } from '@/utils/secureStore';
 import { useIsFocused } from '@react-navigation/native';
 import { CalendarHeaderProps } from 'react-native-calendars/src/calendar/header';
 
@@ -77,12 +76,7 @@ export default function HomeScreen() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const accessToken = await getSecureStore('accessToken');
-      const { data } = await axiosInstance.get('/todo', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const { data } = await axiosInstance.get('/todo');
 
       const fetchedTodos: Todo[] = data.map((item: any) => ({
         todo_id: item.todo_id,
@@ -173,18 +167,10 @@ export default function HomeScreen() {
   const addTodo = async () => {
     if (!newTodo.trim() || !selected) return;
     try {
-      const accessToken = await getSecureStore('accessToken');
-      const { data } = await axiosInstance.post(
-        '/todo',
-        {
-          content: newTodo,
-          // created_at: new Date(selected).toISOString(),
-          due_at: new Date(selected).toISOString(),
-        },
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const { data } = await axiosInstance.post('/todo', {
+        content: newTodo,
+        due_at: new Date(selected).toISOString(),
+      });
       const newTodoItem: Todo = {
         todo_id: data.todo_id,
         content: data.content,
@@ -239,12 +225,8 @@ export default function HomeScreen() {
     );
 
     try {
-      const accessToken = await getSecureStore('accessToken');
       if (newCompleted) {
-        // 완료 처리
-        const { data } = await axiosInstance.post(`/todo/done/${todo_id}`, null, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+        const { data } = await axiosInstance.post(`/todo/done/${todo_id}`, null);
 
         // 이전에 표시된 적이 없을 때만 경험치 토스트 메시지 표시
         if (!hasShownExp) {
@@ -255,11 +237,7 @@ export default function HomeScreen() {
         }
       } else {
         // 미완료 처리
-        await axiosInstance.put(
-          `/todo/${todo_id}`,
-          { completed: newCompleted },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
+        await axiosInstance.put(`/todo/${todo_id}`, { completed: newCompleted });
       }
     } catch (error) {
       setTodos(todos);
@@ -274,11 +252,8 @@ export default function HomeScreen() {
   // 할 일 삭제
   const deleteTodo = async (todo_id: number) => {
     try {
-      const accessToken = await getSecureStore('accessToken');
       console.log('할 일 삭제');
-      await axiosInstance.delete(`/todo/${todo_id}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      await axiosInstance.delete(`/todo/${todo_id}`);
       setTodos((prev) => prev.filter((todo) => todo.todo_id !== todo_id));
     } catch (error) {
       Toast.show({

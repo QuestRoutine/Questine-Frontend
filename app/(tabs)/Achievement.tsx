@@ -1,40 +1,10 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, Image } from 'react-native';
-import { useEffect, useMemo, useState } from 'react';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useEffect, useState } from 'react';
 import { Colors, QuestineColors } from '@/constants/Colors';
 import axiosInstance from '@/api/axios';
-import { getSecureStore } from '@/utils/secureStore';
 import { useIsFocused } from '@react-navigation/native';
 import Modal from 'react-native-modal';
 import { X } from 'lucide-react-native';
-
-const BADGES = [
-  { id: 1, title: '첫 투두 완료', description: '첫 번째 할 일을 완료했어요', isUnlocked: true, icon: '🏆' },
-  {
-    id: 2,
-    title: '연속 3일 달성',
-    description: '연속으로 3일 동안 모든 할 일을 완료했어요',
-    isUnlocked: true,
-    icon: '🔥',
-  },
-  {
-    id: 3,
-    title: '타임 마스터',
-    description: '정해진 시간 내에 10개의 할 일을 완료했어요',
-    isUnlocked: false,
-    icon: '⏰',
-  },
-  { id: 4, title: '집중력 대장', description: '2시간 동안 할 일에 집중했어요', isUnlocked: true, icon: '🧠' },
-  { id: 5, title: '초고수', description: '100개의 할 일을 완료했어요', isUnlocked: false, icon: '⭐' },
-  { id: 6, title: '아침형 인간', description: '아침 8시 전에 할 일을 완료했어요', isUnlocked: false, icon: '🌞' },
-];
-
-// 임시 업적 데이터
-const ACHIEVEMENTS = [
-  { id: 1, title: '할 일 마스터', progress: 75, maxProgress: 100, reward: 50, icon: '📝' },
-  { id: 2, title: '꾸준함의 대가', progress: 5, maxProgress: 30, reward: 100, icon: '📅' },
-  { id: 3, title: '빠른 완료', progress: 12, maxProgress: 20, reward: 30, icon: '⚡' },
-];
 
 type AchievementProps = {
   achievement_id: number | null;
@@ -47,49 +17,31 @@ type AchievementProps = {
 };
 
 export default function Award() {
-  const colorScheme = useColorScheme();
-  // const colors = Colors[colorScheme ?? 'light'];
   const colors = Colors['light'];
-
-  // 임시 사용자 경험치 데이터
-  const userExp = 350;
-  const levelExp = 500;
-  const currentLevel = 3;
-
-  const expPercentage = useMemo(() => (userExp / levelExp) * 100, [userExp, levelExp]);
-
-  const unlockedBadges = useMemo(() => BADGES.filter((badge) => badge.isUnlocked), []);
-  const lockedBadges = useMemo(() => BADGES.filter((badge) => !badge.isUnlocked), []);
   const isFocused = useIsFocused();
-
   const [achievements, setAchievements] = useState<AchievementProps[]>([]);
 
   useEffect(() => {
     if (!isFocused) return;
     const fetchData = async () => {
-      const accessToken = await getSecureStore('accessToken');
       const {
         data: { data },
-      } = await axiosInstance.get('/achievements', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      } = await axiosInstance.get('/achievements');
       setAchievements(data);
       return data;
     };
     fetchData();
   }, [isFocused]);
 
-  // 모달 상태 및 선택된 업적 추가
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedAchievement, setSelectedAchievement] = useState<AchievementProps | null>(null);
 
-  // 업적 클릭 핸들러
+  // 업적 클릭
   const handleAchievementPress = (achievement: AchievementProps) => {
     setSelectedAchievement(achievement);
     setModalVisible(true);
   };
 
-  // 모달 닫기 함수
   const closeModal = () => {
     setModalVisible(false);
   };
@@ -344,7 +296,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  // 달성 뱃지
+  // 달성 업적
   achievedBadge: {
     backgroundColor: QuestineColors.BLUE_300,
     paddingHorizontal: 15,

@@ -1,4 +1,3 @@
-import { getSecureStore } from '@/utils/secureStore';
 import axiosInstance from './axios';
 
 type RequestUser = {
@@ -16,33 +15,16 @@ async function postSignin(body: RequestUser): Promise<{ accessToken: string; ref
 }
 
 async function getMe() {
-  const accessToken = await getSecureStore('accessToken');
-  const { data } = await axiosInstance.get('/auth/me', {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  const { data } = await axiosInstance.get('/auth/me');
   return data;
 }
 
 async function postLogout(): Promise<void> {
-  console.log('postLogout');
-  const accessToken = await getSecureStore('accessToken');
-
-  await axiosInstance.post('/auth/logout', null, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  await axiosInstance.post('/auth/logout', null);
 }
 
 async function getAccessToken() {
-  const refreshToken = await getSecureStore('refreshToken');
-  const { data } = await axiosInstance.get('/auth/refresh', {
-    headers: {
-      Authorization: `Bearer ${refreshToken}`,
-    },
-  });
+  const { data } = await axiosInstance.get('/auth/refresh');
   return data;
 }
 

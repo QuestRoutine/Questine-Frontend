@@ -16,7 +16,6 @@ import {
 import { UserCharacter, Item, EquippedItems, CharacterImageType } from '@/types/character';
 import { Colors, QuestineColors } from '@/constants/Colors';
 import axiosInstance from '@/api/axios';
-import { getSecureStore } from '@/utils/secureStore';
 import { useIsFocused } from '@react-navigation/native';
 
 const MOCK_USER: UserCharacter = {
@@ -134,23 +133,16 @@ export default function CharacterScreen() {
   useEffect(() => {
     if (!isFocused) return;
     const fetchData = async () => {
-      const accessToken = await getSecureStore('accessToken');
       const {
         data: { data },
-      } = await axiosInstance.get(`/characters/me`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      } = await axiosInstance.get('/characters/me');
       setCharacterInfo(data);
       console.log(characterInfo);
     };
     fetchData();
   }, [isFocused]);
-  const textColor = colors.text;
-  const cardBgColor = '#fff';
-  const accentColor = colors.tint;
 
+  const textColor = colors.text;
   const [activeTab, setActiveTab] = useState('character');
   const [equippedItems, setEquippedItems] = useState<EquippedItems>(INITIAL_EQUIPPED_ITEMS);
   const [inventory, setInventory] = useState<string[]>(['1', '3']);
@@ -160,7 +152,6 @@ export default function CharacterScreen() {
   const [showItemDetails, setShowItemDetails] = useState<Item | null>(null);
 
   // 애니메이션 값들
-  const scaleAnim = useRef(new Animated.Value(1)).current;
   const tabSwitchAnim = useRef(new Animated.Value(0)).current;
   const goldAnim = useRef(new Animated.Value(1)).current;
 
@@ -353,8 +344,6 @@ export default function CharacterScreen() {
       </View>
     );
   };
-
-  const { width, height } = Dimensions.get('window');
 
   // 아이템 상세 모달 컴포넌트
   const ItemDetailsModal = () => (
