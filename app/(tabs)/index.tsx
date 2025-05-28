@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Text,
   SafeAreaView,
   View,
   Pressable,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
@@ -13,16 +12,17 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
-  Keyboard,
 } from 'react-native';
 import { CalendarList, DateData } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
-import { LinearGradient } from 'expo-linear-gradient';
 import '@/constants/Calendars';
-import { Check } from 'lucide-react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { CalendarHeaderProps } from 'react-native-calendars/src/calendar/header';
 import { useAddTodo, useDeleteTodo, useTodos, useToggleTodoComplete } from '@/hooks/useTodo';
+import dayjs from 'dayjs';
+import TodoInputSection from '../../components/TodoInputSection';
+import TodoList from '../../components/TodoList';
+import { SingleDotDay, MultiDotDay, EmptyDay } from '../../components/CalendarDayCells';
 
 type MarkedDates = {
   [date: string]: {
@@ -38,13 +38,27 @@ type MarkedDates = {
 
 const COLORS = ['#fda4af', '#fdba74', '#fef08a', '#bef264', '#7dd3fc', '#c4b5fd', '#f0abfc'];
 
+const DAY_CELL_WIDTH = 32;
+const DAY_CELL_HEIGHT = 40;
+const DAY_TEXT_FONT_SIZE = 14;
+const DAY_SELECTED_RADIUS = 16;
+const TODO_INDICATOR_SIZE = 20;
+const TODO_INDICATOR_RADIUS = 5;
+const CHECKBOX_SIZE = 20;
+const CHECKBOX_RADIUS = 4;
+const CHECKBOX_BORDER_WIDTH = 2;
+const CHECKMARK_FONT_SIZE = 12;
+const ADD_BUTTON_RADIUS = 8;
+const ADD_BUTTON_COLOR = '#FF8DA1';
+const EMPTY_MESSAGE_COLOR = '#888';
+
 interface Todo {
   todo_id: number;
   content: string;
   completed: boolean;
   created_at: string;
   exp_reward: number;
-  exp_shown?: boolean; // 경험치 토스트 메시지가 표시되었는지 여부를 저장
+  exp_shown?: boolean; // exp 토스트 메시지 표시 여부
   due_at: string;
 }
 
@@ -66,7 +80,6 @@ export default function HomeScreen() {
   const toggleTodoComplete = useToggleTodoComplete();
   const addTodoMutation = useAddTodo(() => setNewTodo(''));
   const deleteTodoMutation = useDeleteTodo();
-  const deleteTodo = async (todo_id: number) => await deleteTodoMutation.mutateAsync(todo_id);
 
   useEffect(() => {
     updateAllMarkedDates();
@@ -113,17 +126,14 @@ export default function HomeScreen() {
   const onDayPress = (day: DateData) => {
     // 이전에 선택된 날짜와 새로 선택된 날짜가 다른 경우에만 색상 변경
     if (selected !== day.dateString) {
-      const selectedColor = COLORS[0];
       setSelected(day.dateString);
-      console.log('onDayPress ', day.dateString);
-      console.log('날짜 선택됨:', day.dateString, '색상:', selectedColor);
+      console.log('날짜 선택됨:', day.dateString);
     }
   };
 
   // 월 변경 시, 호출되는 함수
   const onMonthChange = (month: DateData) => {
     const newMonth = `${month.year}-${month.month < 10 ? '0' + month.month : month.month}-01`;
-    console.log('New month string:', newMonth);
     setCurrentMonth(newMonth);
     if (month.month === +todayStr.split('-')[1]) {
       setSelected(todayStr);
@@ -133,121 +143,142 @@ export default function HomeScreen() {
   };
 
   // 할 일 추가
-  const addTodo = () => {
+  const addTodo = useCallback(() => {
     if (!newTodo.trim() || !selected) return;
+    const now = dayjs();
+    const dueAt = dayjs(selected).hour(now.hour()).minute(now.minute()).second(now.second());
+    console.log(dueAt);
     addTodoMutation.mutate({
       content: newTodo,
-      due_at: new Date(selected).toISOString(),
+      due_at: dueAt.toISOString(),
     });
-  };
+    setNewTodo('');
+  }, [newTodo, selected, addTodoMutation]);
 
   // 할 일 토글 (완료/미완료)
-  const handleToggleTodo = (todo: Todo) => {
-    toggleTodoComplete.mutate({
-      todo_id: todo.todo_id,
-      completed: !todo.completed,
-    });
-  };
+  const handleToggleTodo = useCallback(
+    (todo: Todo) => {
+      toggleTodoComplete.mutate({
+        todo_id: todo.todo_id,
+        completed: !todo.completed,
+      });
+    },
+    [toggleTodoComplete]
+  );
 
-  // 선택된 날짜의 할 일 필터링
+  const deleteTodoMemo = useCallback(
+    (todo_id: number) => {
+      deleteTodoMutation.mutateAsync(todo_id);
+    },
+    [deleteTodoMutation]
+  );
+
   const filteredTodos = todos.filter((todo) => todo.due_at.split('T')[0] === selected);
 
   // custom day
   const dayComponent = ({ date, state, marking }: any) => {
-    // 해당 날짜에 대한 마커 정보 가져오기
     const mark = marking || {};
     const isSelected = date.dateString === selected;
     const hasTodos = mark.todoCount && mark.todoCount > 0;
     const hasCompletedTodos = mark.completedCount && mark.completedCount > 0;
     const incompleteTodoCount = mark.incompletedCount || 0;
-
-    // 날짜 셀 색상 설정
-    let dayBackgroundStyle = {};
-    let todoCountText = null;
+    const dots = mark.dots || [];
 
     if (hasTodos) {
       if (hasCompletedTodos) {
-        // 완료된 할일이 있는 경우
-        const dots = mark.dots || [];
-
         if (dots.length === 1) {
-          // 완료된 할일이 하나뿐인 경우 단일 색상
-          dayBackgroundStyle = {
-            backgroundColor: dots[0].color,
-          };
-
-          if (incompleteTodoCount === 0) {
-            todoCountText = <Check size={16} strokeWidth={3} />;
-          } else if (incompleteTodoCount > 0) {
-            todoCountText = <Text style={styles.todoCountText}>{incompleteTodoCount}</Text>;
-          }
-        } else if (dots.length > 1) {
-          // 색상 분할을 위한 스타일 반환
           return (
-            <Pressable
-              style={styles.dayContainer}
-              onPress={() => {
+            <SingleDotDay
+              date={date}
+              state={state}
+              isSelected={isSelected}
+              dotColor={dots[0].color}
+              incompleteTodoCount={incompleteTodoCount}
+              onDayPress={(d) =>
                 onDayPress({
-                  dateString: date.dateString,
-                  day: date.day,
-                  month: date.month,
-                  year: date.year,
-                  timestamp: date.timestamp,
-                });
-              }}
-            >
-              <View style={[styles.dayTextContainer, isSelected && styles.selectedDayContainer]}>
-                <Text
-                  style={[
-                    styles.dayText,
-                    state === 'disabled' ? styles.disabledText : null,
-                    isSelected ? styles.selectedDayText : null,
-                  ]}
-                >
-                  {date.day}
-                </Text>
-              </View>
-
-              <LinearGradient
-                style={[styles.splitColorContainer, isSelected && styles.selectedTodoIndicator]}
-                colors={dots.slice(0, 7).map((dot: { color: string }) => dot.color)}
-                locations={dots.slice(0, 7).map((v: any, index: number) => index / (Math.min(dots.length, 7) - 1 || 1))}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-              >
-                {/* 미완료 할일 카운트가 있는 경우 표시 */}
-                {incompleteTodoCount === 0 ? (
-                  <Check size={16} strokeWidth={3} />
-                ) : (
-                  incompleteTodoCount > 0 && <Text style={styles.todoCountText}>{incompleteTodoCount}</Text>
-                )}
-              </LinearGradient>
-            </Pressable>
+                  dateString: d.dateString,
+                  day: d.day,
+                  month: d.month,
+                  year: d.year,
+                  timestamp: d.timestamp,
+                })
+              }
+            />
+          );
+        } else if (dots.length > 1) {
+          return (
+            <MultiDotDay
+              date={date}
+              state={state}
+              isSelected={isSelected}
+              dots={dots}
+              incompleteTodoCount={incompleteTodoCount}
+              onDayPress={(d) =>
+                onDayPress({
+                  dateString: d.dateString,
+                  day: d.day,
+                  month: d.month,
+                  year: d.year,
+                  timestamp: d.timestamp,
+                })
+              }
+            />
           );
         }
-
-        // 미완료 할일이 있으면 카운트 표시
-        if (incompleteTodoCount > 0 && !todoCountText) {
-          todoCountText = <Text style={styles.todoCountText}>{incompleteTodoCount}</Text>;
+        if (incompleteTodoCount > 0) {
+          return (
+            <SingleDotDay
+              date={date}
+              state={state}
+              isSelected={isSelected}
+              dotColor={dots[0]?.color || '#f0f0f0'}
+              incompleteTodoCount={incompleteTodoCount}
+              onDayPress={(d) =>
+                onDayPress({
+                  dateString: d.dateString,
+                  day: d.day,
+                  month: d.month,
+                  year: d.year,
+                  timestamp: d.timestamp,
+                })
+              }
+            />
+          );
         }
       } else {
-        // 모든 할일이 미완료인 경우 카운트만 표시
-        todoCountText = <Text style={styles.todoCountText}>{mark.todoCount}</Text>;
+        // 모든 할일이 미완료인 경우
+        return (
+          <EmptyDay
+            date={date}
+            state={state}
+            isSelected={isSelected}
+            todoCount={mark.todoCount}
+            onDayPress={(d) =>
+              onDayPress({
+                dateString: d.dateString,
+                day: d.day,
+                month: d.month,
+                year: d.year,
+                timestamp: d.timestamp,
+              })
+            }
+          />
+        );
       }
     }
-
+    // 기본(할 일 없음)
     return (
       <Pressable
         style={styles.dayContainer}
-        onPress={() => {
+        onPress={() =>
           onDayPress({
             dateString: date.dateString,
             day: date.day,
             month: date.month,
             year: date.year,
             timestamp: date.timestamp,
-          });
-        }}
+          })
+        }
       >
         <View style={[styles.dayTextContainer, isSelected && styles.selectedDayContainer]}>
           <Text
@@ -260,10 +291,7 @@ export default function HomeScreen() {
             {date.day}
           </Text>
         </View>
-
-        <View style={[styles.todoIndicator, dayBackgroundStyle, isSelected && styles.selectedTodoIndicator]}>
-          {todoCountText}
-        </View>
+        <View style={[styles.todoIndicator, isSelected && styles.selectedTodoIndicator]} />
       </Pressable>
     );
   };
@@ -381,13 +409,10 @@ export default function HomeScreen() {
               resizeMode='contain'
               accessibilityLabel='Questine Logo'
             />
-            <Image src='../../assets/images/Questine.png' alt='Questine Logo' />
           </View>
           {todosLoading && (
             <View style={styles.loadingOverlay}>
-              {/* <View style={styles.loadingBox}> */}
               <ActivityIndicator size='large' color='hotpink' />
-              {/* </View> */}
             </View>
           )}
           <>
@@ -408,53 +433,17 @@ export default function HomeScreen() {
             {selected ? (
               <View style={styles.todoSection}>
                 <Text style={styles.selectedDateText}>{selected} 할 일</Text>
-                <View style={styles.todoInputContainer}>
-                  <TextInput
-                    style={styles.todoInput}
-                    value={newTodo}
-                    onChangeText={setNewTodo}
-                    onSubmitEditing={() => {
-                      if (!newTodo.trim()) {
-                        Keyboard.dismiss();
-                        return;
-                      }
-                      addTodo();
-                    }}
-                    submitBehavior='submit'
-                    placeholder='새로운 할 일을 입력하세요'
-                    placeholderTextColor='#888'
-                    autoCapitalize='none'
-                    autoFocus={false}
-                  />
-                  <TouchableOpacity style={styles.addButton} onPress={addTodo}>
-                    <Text style={styles.addButtonText}>추가</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.todoListContainer}>
-                  {filteredTodos.length > 0 ? (
-                    filteredTodos.map((todo) => (
-                      <View key={todo.todo_id} style={styles.todoItem}>
-                        <TouchableOpacity
-                          style={[styles.checkbox, todo.completed && styles.checkboxChecked]}
-                          onPress={() => handleToggleTodo(todo)}
-                        >
-                          {todo.completed && <Text style={styles.checkmark}>✓</Text>}
-                        </TouchableOpacity>
-                        <View style={styles.todoContent}>
-                          <Text style={[styles.todoText, todo.completed && styles.todoTextCompleted]}>
-                            {todo.content}
-                          </Text>
-                        </View>
-                        <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTodo(todo.todo_id)}>
-                          <Text style={styles.deleteButtonText}>×</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.emptyMessage}>할 일이 없습니다. 새로운 할 일을 추가해보세요!</Text>
-                  )}
-                </View>
+                <TodoInputSection
+                  newTodo={newTodo}
+                  setNewTodo={setNewTodo}
+                  addTodo={addTodo}
+                  isLoading={addTodoMutation.status === 'pending'}
+                />
+                <TodoList
+                  filteredTodos={filteredTodos}
+                  handleToggleTodo={handleToggleTodo}
+                  deleteTodo={deleteTodoMemo}
+                />
               </View>
             ) : (
               <View style={styles.noDateSelectedContainer}>
@@ -505,8 +494,8 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   dayContainer: {
-    width: 32,
-    height: 40,
+    width: DAY_CELL_WIDTH,
+    height: DAY_CELL_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 2,
@@ -516,13 +505,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedDayContainer: {
-    backgroundColor: '#FF8DA1',
-    borderRadius: 16,
+    backgroundColor: ADD_BUTTON_COLOR,
+    borderRadius: DAY_SELECTED_RADIUS,
     padding: 4,
   },
   dayText: {
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: DAY_TEXT_FONT_SIZE,
   },
   disabledText: {
     color: '#d9e1e8',
@@ -532,9 +521,9 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   todoIndicator: {
-    height: 20,
-    width: 20,
-    borderRadius: 5,
+    height: TODO_INDICATOR_SIZE,
+    width: TODO_INDICATOR_SIZE,
+    borderRadius: TODO_INDICATOR_RADIUS,
     backgroundColor: '#f0f0f0',
     marginTop: 4,
     justifyContent: 'center',
@@ -580,11 +569,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   addButton: {
-    backgroundColor: '#FF8DA1',
+    backgroundColor: ADD_BUTTON_COLOR,
     paddingHorizontal: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: ADD_BUTTON_RADIUS,
   },
   addButtonText: {
     color: 'white',
@@ -601,10 +590,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 2,
+    width: CHECKBOX_SIZE,
+    height: CHECKBOX_SIZE,
+    borderRadius: CHECKBOX_RADIUS,
+    borderWidth: CHECKBOX_BORDER_WIDTH,
     borderColor: '#ddd',
     marginRight: 10,
     justifyContent: 'center',
@@ -617,7 +606,7 @@ const styles = StyleSheet.create({
   checkmark: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: CHECKMARK_FONT_SIZE,
   },
   todoContent: {
     flex: 1,
@@ -643,7 +632,7 @@ const styles = StyleSheet.create({
   emptyMessage: {
     marginTop: 20,
     textAlign: 'center',
-    color: '#888',
+    color: EMPTY_MESSAGE_COLOR,
     fontStyle: 'italic',
   },
   noDateSelectedContainer: {
@@ -657,9 +646,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   splitColorContainer: {
-    height: 20,
-    width: 20,
-    borderRadius: 5,
+    height: TODO_INDICATOR_SIZE,
+    width: TODO_INDICATOR_SIZE,
+    borderRadius: TODO_INDICATOR_RADIUS,
     marginTop: 4,
     overflow: 'hidden',
     justifyContent: 'center',
