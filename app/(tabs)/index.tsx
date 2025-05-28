@@ -130,7 +130,7 @@ export default function HomeScreen() {
 
   // 월 변경 시, 호출되는 함수
   const onMonthChange = (month: DateData) => {
-    const newMonth = `${month.year}-${month.month < 10 ? '0' + month.month : month.month}-01`;
+    const newMonth = `${month.year}-${String(month.month).padStart(2, '0')}-01`;
     setCurrentMonth(newMonth);
     if (month.month === +todayStr.split('-')[1]) {
       setSelected(todayStr);
@@ -364,7 +364,7 @@ export default function HomeScreen() {
         </View>
 
         <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
-          {year}년 {month < 10 ? `0${month}` : month}월
+          {year}년 {String(month).padStart(2, '0')}월
         </Text>
 
         <Pressable onPress={() => handleMonthChange(1)} style={{ padding: 5 }}>
