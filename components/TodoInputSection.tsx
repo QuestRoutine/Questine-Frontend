@@ -1,40 +1,42 @@
-import React, { memo } from 'react';
-import { View, TextInput, TouchableOpacity, Text, Keyboard, StyleSheet } from 'react-native';
+import React, { memo, useState } from 'react';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, Keyboard } from 'react-native';
 
 export interface TodoInputSectionProps {
-  newTodo: string;
-  setNewTodo: (v: string) => void;
-  addTodo: () => void;
+  addTodo: (todo: string) => void;
   isLoading: boolean;
 }
 
-const TodoInputSection = memo(function TodoInputSection({
-  newTodo,
-  setNewTodo,
-  addTodo,
-  isLoading,
-}: TodoInputSectionProps) {
+const TodoInputSection = memo(function TodoInputSection({ addTodo, isLoading }: TodoInputSectionProps) {
+  const [inputValue, setInputValue] = useState('');
+
+  const handleAdd = () => {
+    if (!inputValue.trim()) {
+      Keyboard.dismiss();
+      return;
+    }
+    addTodo(inputValue);
+    setInputValue('');
+  };
+
   return (
     <View style={styles.todoInputContainer}>
       <TextInput
         style={styles.todoInput}
-        value={newTodo}
-        onChangeText={setNewTodo}
-        onSubmitEditing={() => {
-          if (!newTodo.trim()) {
-            Keyboard.dismiss();
-            return;
-          }
-          addTodo();
-        }}
-        submitBehavior='submit'
+        value={inputValue}
+        onChangeText={setInputValue}
         placeholder='새로운 할 일을 입력하세요'
         placeholderTextColor='#888'
         autoCapitalize='none'
         autoFocus={false}
         editable={!isLoading}
+        onSubmitEditing={handleAdd}
+        returnKeyType='done'
       />
-      <TouchableOpacity style={styles.addButton} onPress={addTodo} disabled={isLoading}>
+      <TouchableOpacity
+        style={[styles.addButton, isLoading && { opacity: 0.5 }]}
+        onPress={handleAdd}
+        disabled={isLoading}
+      >
         <Text style={styles.addButtonText}>추가</Text>
       </TouchableOpacity>
     </View>

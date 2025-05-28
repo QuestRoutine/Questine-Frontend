@@ -6,12 +6,9 @@ import {
   Pressable,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
   Image,
   ActivityIndicator,
   RefreshControl,
-  Platform,
 } from 'react-native';
 import { CalendarList, DateData } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
@@ -23,7 +20,8 @@ import dayjs from 'dayjs';
 import TodoInputSection from '../../components/TodoInputSection';
 import TodoList from '../../components/TodoList';
 import { SingleDotDay, MultiDotDay, EmptyDay } from '../../components/CalendarDayCells';
-
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { QuestineColors } from '@/constants/Colors';
 type MarkedDates = {
   [date: string]: {
     selected?: boolean;
@@ -68,7 +66,6 @@ export default function HomeScreen() {
   const todayStr = today.split('T')[0];
   const [selected, setSelected] = useState(today);
   const [currentMonth, setCurrentMonth] = useState(today);
-  const [newTodo, setNewTodo] = useState('');
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
 
   // 할 일 목록에 따라 날짜 마커 초기화
@@ -78,7 +75,7 @@ export default function HomeScreen() {
 
   const { data: todos = [], isLoading: todosLoading, refetch } = useTodos();
   const toggleTodoComplete = useToggleTodoComplete();
-  const addTodoMutation = useAddTodo(() => setNewTodo(''));
+  const addTodoMutation = useAddTodo();
   const deleteTodoMutation = useDeleteTodo();
 
   useEffect(() => {
@@ -143,17 +140,18 @@ export default function HomeScreen() {
   };
 
   // 할 일 추가
-  const addTodo = useCallback(() => {
-    if (!newTodo.trim() || !selected) return;
-    const now = dayjs();
-    const dueAt = dayjs(selected).hour(now.hour()).minute(now.minute()).second(now.second());
-    console.log(dueAt);
-    addTodoMutation.mutate({
-      content: newTodo,
-      due_at: dueAt.toISOString(),
-    });
-    setNewTodo('');
-  }, [newTodo, selected, addTodoMutation]);
+  const addTodo = useCallback(
+    (content: string) => {
+      if (!content.trim() || !selected) return;
+      const now = dayjs();
+      const dueAt = dayjs(selected).hour(now.hour()).minute(now.minute()).second(now.second());
+      addTodoMutation.mutate({
+        content,
+        due_at: dueAt.toISOString(),
+      });
+    },
+    [addTodoMutation, selected]
+  );
 
   // 할 일 토글 (완료/미완료)
   const handleToggleTodo = useCallback(
@@ -394,68 +392,70 @@ export default function HomeScreen() {
   };
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'height' : 'padding'} style={{ flex: 1 }}>
-        <ScrollView
-          keyboardShouldPersistTaps='handled'
-          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
-        >
-          <View style={styles.header}>
-            <Image
-              source={require('../../assets/images/Questine.png')}
-              style={{
-                width: 150,
-                height: 60,
-              }}
-              resizeMode='contain'
-              accessibilityLabel='Questine Logo'
-            />
+      <KeyboardAwareScrollView
+        style={{ flex: 1 }}
+        enableOnAndroid
+        contentContainerStyle={{ flexGrow: 1 }}
+        extraScrollHeight={150}
+        keyboardShouldPersistTaps='handled'
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={QuestineColors.PINK_300}
+            colors={[QuestineColors.PINK_300, QuestineColors.PINK_400, QuestineColors.PINK_500]}
+            progressBackgroundColor={QuestineColors.WHITE}
+          />
+        }
+      >
+        <View style={styles.header}>
+          <Image
+            source={require('../../assets/images/Questine.png')}
+            style={{
+              width: 150,
+              height: 60,
+            }}
+            resizeMode='contain'
+            accessibilityLabel='Questine Logo'
+          />
+        </View>
+        {todosLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size='large' color='hotpink' />
           </View>
-          {todosLoading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size='large' color='hotpink' />
+        )}
+        <>
+          <CalendarList
+            key={currentMonth}
+            current={currentMonth}
+            style={styles.calendar}
+            onDayPress={onDayPress}
+            horizontal
+            pagingEnabled
+            onMonthChange={onMonthChange}
+            markedDates={markedDates}
+            dayComponent={dayComponent}
+            calendarStyle={styles.calendarStyle}
+            hideArrows={false}
+            customHeader={customHeader}
+          />
+          {selected ? (
+            <View style={styles.todoSection}>
+              <Text style={styles.selectedDateText}>{selected} 할 일</Text>
+
+              <TodoInputSection addTodo={addTodo} isLoading={addTodoMutation.status === 'pending'} />
+              <TodoList filteredTodos={filteredTodos} handleToggleTodo={handleToggleTodo} deleteTodo={deleteTodoMemo} />
+            </View>
+          ) : (
+            <View style={styles.noDateSelectedContainer}>
+              <Text style={styles.noDateSelectedText}>날짜를 선택하여 할 일을 관리하세요</Text>
             </View>
           )}
-          <>
-            <CalendarList
-              key={currentMonth}
-              current={currentMonth}
-              style={styles.calendar}
-              onDayPress={onDayPress}
-              horizontal
-              pagingEnabled
-              onMonthChange={onMonthChange}
-              markedDates={markedDates}
-              dayComponent={dayComponent}
-              calendarStyle={styles.calendarStyle}
-              hideArrows={false}
-              customHeader={customHeader}
-            />
-            {selected ? (
-              <View style={styles.todoSection}>
-                <Text style={styles.selectedDateText}>{selected} 할 일</Text>
-                <TodoInputSection
-                  newTodo={newTodo}
-                  setNewTodo={setNewTodo}
-                  addTodo={addTodo}
-                  isLoading={addTodoMutation.status === 'pending'}
-                />
-                <TodoList
-                  filteredTodos={filteredTodos}
-                  handleToggleTodo={handleToggleTodo}
-                  deleteTodo={deleteTodoMemo}
-                />
-              </View>
-            ) : (
-              <View style={styles.noDateSelectedContainer}>
-                <Text style={styles.noDateSelectedText}>날짜를 선택하여 할 일을 관리하세요</Text>
-              </View>
-            )}
-          </>
+        </>
 
-          {/* 하단 여백을 위한 빈 공간 */}
-          <View style={styles.bottomPadding} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+        {/* 하단 여백을 위한 빈 공간 */}
+        <View style={styles.bottomPadding} />
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   todoSection: {
     backgroundColor: '#fff',
     borderRadius: 10,
-    height: '100%',
+    // height: '100%',
     padding: 16,
     elevation: 4,
     shadowColor: '#000',
