@@ -63,7 +63,7 @@ interface Todo {
 export default function HomeScreen() {
   const isFocused = useIsFocused();
   const today = new Date().toISOString();
-  const todayStr = today.split('T')[0];
+  const todayStr = dayjs().tz('Asia/Seoul').format('YYYY-MM-DD');
   const [selected, setSelected] = useState(today);
   const [currentMonth, setCurrentMonth] = useState(today);
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
@@ -93,9 +93,11 @@ export default function HomeScreen() {
   // 모든 날짜의 마커를 할 일 목록에 맞게 업데이트
   const updateAllMarkedDates = () => {
     const newMarkedDates: MarkedDates = {};
-    const uniqueDates = [...new Set(todos.map((todo) => todo.due_at))];
+    // const uniqueDates = [...new Set(todos.map((todo) => todo.due_at))];
+    const uniqueDates = [...new Set(todos.map((todo) => dayjs(todo.due_at).local().format('YYYY-MM-DD')))];
     uniqueDates.forEach((date) => {
-      const dayTodos = todos.filter((todo) => todo.due_at === date);
+      const dayTodos = todos.filter((todo) => dayjs(todo.due_at).local().format('YYYY-MM-DD') === date);
+      // const dayTodos = todos.filter((todo) => todo.due_at === date);
       const completedTodos = dayTodos.filter((todo) => todo.completed);
       const incompleteTodos = dayTodos.filter((todo) => !todo.completed);
       if (dayTodos.length === 0) {
@@ -144,8 +146,9 @@ export default function HomeScreen() {
   const addTodo = useCallback(
     (content: string) => {
       if (!content.trim() || !selected) return;
-      const now = dayjs();
-      const dueAt = dayjs(selected).hour(now.hour()).minute(now.minute()).second(now.second());
+      const now = dayjs().local();
+      console.log(now.hour(), now.minute(), now.second());
+      const dueAt = dayjs.tz(selected, 'Asia/Seoul').hour(now.hour()).minute(now.minute()).second(now.second());
       addTodoMutation.mutate({
         content,
         due_at: dueAt.toISOString(),
@@ -172,7 +175,11 @@ export default function HomeScreen() {
     [deleteTodoMutation]
   );
 
-  const filteredTodos = todos.filter((todo) => todo.due_at.split('T')[0] === selected);
+  const filteredTodos = todos.filter((todo) => {
+    const localDueDate = dayjs(todo.due_at).local().format('YYYY-MM-DD');
+    return localDueDate === selected;
+    // todo.due_at.split('T')[0] === selected;
+  });
 
   // custom day
   const dayComponent = ({ date, state, marking }: any) => {
