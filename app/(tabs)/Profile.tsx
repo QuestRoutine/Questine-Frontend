@@ -29,6 +29,14 @@ type UserInfo = {
   most_productive_time: string | null;
   created_at: string;
   updated_at: string;
+  statistics: {
+    totalCompletedTasks: number;
+    current_streak: number;
+    longest_streak: number;
+    weekly_avg_completion: number;
+    most_productive_day: string | null;
+    most_productive_time: string | null;
+  };
 };
 
 export default function Profile() {
@@ -40,8 +48,9 @@ export default function Profile() {
     if (!isFocused) return;
     const fetchData = async () => {
       const { data } = await axiosInstance.get('/auth/me');
-      console.log(data);
       setUserInfo(data);
+      console.log(data.statistics.totalCompletedTasks);
+
       return data;
     };
     fetchData();
@@ -104,7 +113,7 @@ export default function Profile() {
           <Text style={[styles.cardTitle, { color: colors.text }]}>나의 투두 통계</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text }]}>not yet</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{userInfo?.statistics.totalCompletedTasks}</Text>
               <Text style={[styles.statLabel, { color: colors.icon }]}>완료한 할 일</Text>
             </View>
             <View style={styles.statItem}>
