@@ -1,6 +1,7 @@
 import axiosInstance from '@/api/axios';
 import queryClient from '@/api/queryClient';
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 
@@ -9,7 +10,23 @@ interface AddTodoParams {
   due_at: string;
 }
 
-function useAddTodo(onSuccessCallback?: () => void) {
+interface Todo {
+  todo_id: number;
+  content: string;
+  completed: boolean;
+  created_at: string;
+  exp_reward: number;
+  due_at: string;
+}
+
+const MONTH_OFFSET = 1;
+
+function useAddTodo(year?: number, month?: number, onSuccessCallback?: () => void) {
+  const now = dayjs();
+  const queryYear = year ?? now.year();
+  const queryMonth = month ?? now.month() + 1;
+  const queryKey = getTodosQueryKey(queryYear, queryMonth);
+
   const mutation = useMutation({
     mutationFn: async (params: AddTodoParams) => {
       const { content, due_at } = params;
@@ -20,7 +37,7 @@ function useAddTodo(onSuccessCallback?: () => void) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey });
       if (onSuccessCallback) onSuccessCallback();
     },
     onError: () => {
@@ -35,30 +52,28 @@ function useAddTodo(onSuccessCallback?: () => void) {
   return mutation;
 }
 
-export interface Todo {
-  todo_id: number;
-  content: string;
-  completed: boolean;
-  created_at: string;
-  exp_reward: number;
-  exp_shown?: boolean;
-  due_at: string;
-}
+const getTodosQueryKey = (year: number, month: number) => ['todos', year, month] as const;
 
-const TODOS_QUERY_KEY = ['todos'];
+export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], Error> {
+  const now = dayjs();
+  const queryYear = year ?? now.year();
+  const queryMonth = month ?? now.month() + 1;
 
-export function useTodos(): UseQueryResult<Todo[], Error> {
-  const data = useQuery<Todo[], Error, Todo[], typeof TODOS_QUERY_KEY>({
-    queryKey: TODOS_QUERY_KEY,
+  const data = useQuery<Todo[], Error, Todo[], any>({
+    queryKey: getTodosQueryKey(queryYear, queryMonth),
     queryFn: async () => {
-      const { data } = await axiosInstance.get('/todo');
-      return data.map((item: any) => ({
+      const { data } = await axiosInstance.get('/todo', {
+        params: {
+          year: queryYear,
+          month: queryMonth,
+        },
+      });
+      return data.map((item: Todo) => ({
         todo_id: item.todo_id,
         content: item.content,
         completed: item.completed,
         created_at: item.created_at.split('T')[0],
         exp_reward: item.exp_reward,
-        exp_shown: item.completed,
         due_at: item.due_at.split('T')[0],
       }));
     },
@@ -76,7 +91,12 @@ export function useTodos(): UseQueryResult<Todo[], Error> {
 }
 
 // 할 일 완료/미완료 토글 (낙관적 업데이트)
-export function useToggleTodoComplete() {
+export function useToggleTodoComplete(year?: number, month?: number) {
+  const now = dayjs();
+  const queryYear = year ?? now.year();
+  const queryMonth = month ?? now.month() + 1;
+  const queryKey = getTodosQueryKey(queryYear, queryMonth);
+
   return useMutation({
     mutationFn: async ({ todo_id, completed }: { todo_id: number; completed: boolean }) => {
       if (completed) {
@@ -87,24 +107,31 @@ export function useToggleTodoComplete() {
         return axiosInstance.put(`/todo/${todo_id}`, { completed });
       }
     },
-    // 낙관적 업데이트
-    onMutate: async ({ todo_id, completed }) => {
-      await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
-      const previousTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY);
 
-      queryClient.setQueryData<Todo[]>(TODOS_QUERY_KEY, (old) =>
+    // optimistic
+    onMutate: async ({ todo_id, completed }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousTodos = queryClient.getQueryData<Todo[]>(queryKey);
+
+      queryClient.setQueryData<Todo[]>(queryKey, (old) =>
         old
-          ? old.map((todo) =>
-              todo.todo_id === todo_id ? { ...todo, completed, exp_shown: completed ? todo.exp_shown : true } : todo
-            )
+          ? old.map((todo) => {
+              if (todo.todo_id !== todo_id) return todo;
+              const newCompleted = completed;
+              return {
+                ...todo,
+                completed: newCompleted,
+              };
+            })
           : []
       );
 
       return { previousTodos };
     },
+
     onError: (_err, _variables, context) => {
       if (context?.previousTodos) {
-        queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
+        queryClient.setQueryData(queryKey, context.previousTodos);
       }
       Toast.show({
         type: 'error',
@@ -113,18 +140,23 @@ export function useToggleTodoComplete() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 }
 
-export function useDeleteTodo() {
+export function useDeleteTodo(year?: number, month?: number) {
+  const now = dayjs();
+  const queryYear = year ?? now.year();
+  const queryMonth = month ?? now.month() + MONTH_OFFSET;
+  const queryKey = getTodosQueryKey(queryYear, queryMonth);
+
   return useMutation({
     mutationFn: async (todo_id: number) => {
       await axiosInstance.delete(`/todo/${todo_id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey });
       Toast.show({
         type: 'success',
         text1: '할 일 삭제',

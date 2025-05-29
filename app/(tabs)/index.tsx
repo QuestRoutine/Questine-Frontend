@@ -68,15 +68,16 @@ export default function HomeScreen() {
   const [currentMonth, setCurrentMonth] = useState(today);
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
 
+  const [year, month] = currentMonth.split('-');
+  const { data: todos = [], isLoading: todosLoading, refetch } = useTodos(+year, +month);
+  const toggleTodoComplete = useToggleTodoComplete(+year, +month);
+  const addTodoMutation = useAddTodo(+year, +month);
+  const deleteTodoMutation = useDeleteTodo(+year, +month);
+
   // 할 일 목록에 따라 날짜 마커 초기화
   useEffect(() => {
-    setSelected(today.split('T')[0]);
+    setSelected(todayStr);
   }, []);
-
-  const { data: todos = [], isLoading: todosLoading, refetch } = useTodos();
-  const toggleTodoComplete = useToggleTodoComplete();
-  const addTodoMutation = useAddTodo();
-  const deleteTodoMutation = useDeleteTodo();
 
   useEffect(() => {
     updateAllMarkedDates();
@@ -395,9 +396,9 @@ export default function HomeScreen() {
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         enableOnAndroid
+        keyboardShouldPersistTaps='handled'
         contentContainerStyle={{ flexGrow: 1 }}
         extraScrollHeight={150}
-        keyboardShouldPersistTaps='handled'
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -410,7 +411,7 @@ export default function HomeScreen() {
       >
         <View style={styles.header}>
           <Image
-            source={require('../../assets/images/Questine.png')}
+            source={require('../../assets/images/Questine2.png')}
             style={{
               width: 150,
               height: 60,
