@@ -36,16 +36,43 @@ function useAddTodo(year?: number, month?: number, onSuccessCallback?: () => voi
       });
       return data;
     },
+    onMutate: async (newTodoParams: AddTodoParams) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousTodos = queryClient.getQueryData<Todo[]>(queryKey);
+
+      // 임시 ID
+      const tempId = Date.now();
+
+      queryClient.setQueryData<Todo[]>(queryKey, (old = []) => [
+        ...old,
+        {
+          todo_id: tempId,
+          content: newTodoParams.content,
+          completed: false,
+          created_at: dayjs().local().format('YYYY-MM-DD'),
+          exp_reward: 0,
+          due_at: newTodoParams.due_at,
+        },
+      ]);
+
+      return { previousTodos };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       if (onSuccessCallback) onSuccessCallback();
     },
-    onError: () => {
+    onError: (error, _variables, context) => {
+      if (context?.previousTodos) {
+        queryClient.setQueryData(queryKey, context.previousTodos);
+      }
       Toast.show({
         type: 'error',
         text1: '오류',
         text2: '할 일을 추가하는 데 실패했습니다.',
       });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -78,6 +105,8 @@ export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], 
         due_at: dayjs(item.due_at).local(),
       }));
     },
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
   useEffect(() => {
     if (data.error) {
@@ -149,12 +178,20 @@ export function useToggleTodoComplete(year?: number, month?: number) {
 export function useDeleteTodo(year?: number, month?: number) {
   const now = dayjs().local();
   const queryYear = year ?? now.year();
-  const queryMonth = month ?? now.month() + MONTH_OFFSET;
+  const queryMonth = month ?? now.month() + 1;
   const queryKey = getTodosQueryKey(queryYear, queryMonth);
 
   return useMutation({
     mutationFn: async (todo_id: number) => {
       await axiosInstance.delete(`/todo/${todo_id}`);
+    },
+    onMutate: async (todo_id: number) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousTodos = queryClient.getQueryData<Todo[]>(queryKey);
+
+      queryClient.setQueryData<Todo[]>(queryKey, (old = []) => old.filter((todo) => todo.todo_id !== todo_id));
+
+      return { previousTodos };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -164,12 +201,18 @@ export function useDeleteTodo(year?: number, month?: number) {
         text2: '할 일이 성공적으로 삭제되었습니다.',
       });
     },
-    onError: () => {
+    onError: (_err, _variables, context) => {
+      if (context?.previousTodos) {
+        queryClient.setQueryData(queryKey, context.previousTodos);
+      }
       Toast.show({
         type: 'error',
         text1: '오류',
         text2: '할 일을 삭제하는 데 실패했습니다.',
       });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 }

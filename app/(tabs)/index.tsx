@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Text,
   SafeAreaView,
@@ -9,7 +9,6 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
-  Keyboard,
 } from 'react-native';
 import { CalendarList, DateData } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
@@ -43,13 +42,6 @@ const DAY_TEXT_FONT_SIZE = 14;
 const DAY_SELECTED_RADIUS = 16;
 const TODO_INDICATOR_SIZE = 20;
 const TODO_INDICATOR_RADIUS = 5;
-const CHECKBOX_SIZE = 20;
-const CHECKBOX_RADIUS = 4;
-const CHECKBOX_BORDER_WIDTH = 2;
-const CHECKMARK_FONT_SIZE = 12;
-const ADD_BUTTON_RADIUS = 8;
-const ADD_BUTTON_COLOR = '#FF8DA1';
-const EMPTY_MESSAGE_COLOR = '#888';
 
 interface Todo {
   todo_id: number;
@@ -75,42 +67,39 @@ export default function HomeScreen() {
   const addTodoMutation = useAddTodo(+year, +month);
   const deleteTodoMutation = useDeleteTodo(+year, +month);
 
-  // 할 일 목록에 따라 날짜 마커 초기화
   useEffect(() => {
     setSelected(todayStr);
-  }, []);
+  }, [todayStr]);
 
-  useEffect(() => {
-    updateAllMarkedDates();
-  }, [todos]);
-
-  useEffect(() => {
-    if (!isFocused) {
-      return;
-    }
-    refetch();
-  }, [isFocused, refetch]);
-
-  // 모든 날짜의 마커를 할 일 목록에 맞게 업데이트
-  const updateAllMarkedDates = () => {
+  const updateAllMarkedDates = useCallback(() => {
     const newMarkedDates: MarkedDates = {};
-    // const uniqueDates = [...new Set(todos.map((todo) => todo.due_at))];
-    const uniqueDates = [...new Set(todos.map((todo) => dayjs(todo.due_at).local().format('YYYY-MM-DD')))];
+    const formattedTodos = todos.map((todo) => ({
+      ...todo,
+      formattedDate: dayjs(todo.due_at).local().format('YYYY-MM-DD'),
+    }));
+
+    const uniqueDates = [...new Set(formattedTodos.map((todo) => todo.formattedDate))];
+
     uniqueDates.forEach((date) => {
-      const dayTodos = todos.filter((todo) => dayjs(todo.due_at).local().format('YYYY-MM-DD') === date);
-      // const dayTodos = todos.filter((todo) => todo.due_at === date);
-      const completedTodos = dayTodos.filter((todo) => todo.completed);
-      const incompleteTodos = dayTodos.filter((todo) => !todo.completed);
+      const dayTodos = formattedTodos.filter((todo) => todo.formattedDate === date);
+
       if (dayTodos.length === 0) {
         return;
-      } else if (completedTodos.length === 0) {
+      }
+
+      const completedTodos = dayTodos.filter((todo) => todo.completed);
+      const incompleteTodos = dayTodos.filter((todo) => !todo.completed);
+
+      if (completedTodos.length === 0) {
         newMarkedDates[date] = {
           marked: true,
           dots: [],
           todoCount: dayTodos.length,
         };
       } else {
+        // 완료된 할 일 색상 표시
         const completedColors = completedTodos.map((_, index) => COLORS[index % COLORS.length]);
+
         newMarkedDates[date] = {
           marked: true,
           dots: completedColors.map((color) => ({ color })),
@@ -120,15 +109,25 @@ export default function HomeScreen() {
         };
       }
     });
+
     setMarkedDates(newMarkedDates);
-  };
+  }, [todos]);
+
+  useEffect(() => {
+    updateAllMarkedDates();
+  }, [todos, updateAllMarkedDates]);
+
+  useEffect(() => {
+    if (isFocused) {
+      refetch();
+    }
+  }, [isFocused, refetch]);
 
   // 날짜 누를 시, 호출되는 함수
   const onDayPress = (day: DateData) => {
     // 이전에 선택된 날짜와 새로 선택된 날짜가 다른 경우에만 색상 변경
     if (selected !== day.dateString) {
       setSelected(day.dateString);
-      console.log('날짜 선택됨:', day.dateString);
     }
   };
 
@@ -169,6 +168,7 @@ export default function HomeScreen() {
     [toggleTodoComplete]
   );
 
+  // 할 일 삭제
   const deleteTodoMemo = useCallback(
     (todo_id: number) => {
       deleteTodoMutation.mutateAsync(todo_id);
@@ -176,11 +176,14 @@ export default function HomeScreen() {
     [deleteTodoMutation]
   );
 
-  const filteredTodos = todos.filter((todo) => {
-    const localDueDate = dayjs(todo.due_at).local().format('YYYY-MM-DD');
-    return localDueDate === selected;
-    // todo.due_at.split('T')[0] === selected;
-  });
+  const filteredTodos = useMemo(() => {
+    const filteredItems = todos.filter((todo) => {
+      const localDueDate = dayjs(todo.due_at).local().format('YYYY-MM-DD');
+      return localDueDate === selected;
+    });
+
+    return filteredItems.sort((a, b) => b.todo_id - a.todo_id);
+  }, [todos, selected]);
 
   // custom day
   const dayComponent = ({ date, state, marking }: any) => {
@@ -384,11 +387,10 @@ export default function HomeScreen() {
   };
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
       await refetch();
-      updateAllMarkedDates();
     } catch (error) {
       Toast.show({
         type: 'error',
@@ -398,7 +400,7 @@ export default function HomeScreen() {
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [refetch]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -514,7 +516,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedDayContainer: {
-    backgroundColor: ADD_BUTTON_COLOR,
+    backgroundColor: '#FF8DA1',
     borderRadius: DAY_SELECTED_RADIUS,
     padding: 4,
   },
@@ -541,11 +543,6 @@ const styles = StyleSheet.create({
   selectedTodoIndicator: {
     transform: [{ scale: 1.1 }],
   },
-  todoCountText: {
-    fontSize: 12,
-    color: '#000',
-    fontWeight: 'bold',
-  },
   todoSection: {
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -564,86 +561,6 @@ const styles = StyleSheet.create({
     color: '#FF8DA1',
     marginBottom: 10,
   },
-  todoInputContainer: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  todoInput: {
-    flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginRight: 8,
-  },
-  addButton: {
-    backgroundColor: ADD_BUTTON_COLOR,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: ADD_BUTTON_RADIUS,
-  },
-  addButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  todoListContainer: {
-    marginTop: 12,
-  },
-  todoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  checkbox: {
-    width: CHECKBOX_SIZE,
-    height: CHECKBOX_SIZE,
-    borderRadius: CHECKBOX_RADIUS,
-    borderWidth: CHECKBOX_BORDER_WIDTH,
-    borderColor: '#ddd',
-    marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: '#B5EAD7',
-    borderColor: '#B5EAD7',
-  },
-  checkmark: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: CHECKMARK_FONT_SIZE,
-  },
-  todoContent: {
-    flex: 1,
-  },
-  todoText: {
-    fontSize: 16,
-  },
-  todoTextCompleted: {
-    textDecorationLine: 'line-through',
-    color: '#888',
-  },
-  deleteButton: {
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  deleteButtonText: {
-    fontSize: 20,
-    color: '#FF8DA1',
-    fontWeight: 'bold',
-  },
-  emptyMessage: {
-    marginTop: 20,
-    textAlign: 'center',
-    color: EMPTY_MESSAGE_COLOR,
-    fontStyle: 'italic',
-  },
   noDateSelectedContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -653,15 +570,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
     textAlign: 'center',
-  },
-  splitColorContainer: {
-    height: TODO_INDICATOR_SIZE,
-    width: TODO_INDICATOR_SIZE,
-    borderRadius: TODO_INDICATOR_RADIUS,
-    marginTop: 4,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   bottomPadding: {
     height: 30,
