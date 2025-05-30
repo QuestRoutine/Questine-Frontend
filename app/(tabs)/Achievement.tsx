@@ -100,34 +100,6 @@ export default function Award() {
                       <Text style={[styles.achievedDate]}>
                         {selectedAchievement.unlocked_at.toString().slice(0, 10)}
                       </Text>
-                      <View style={styles.achievedBadge}>
-                        <Text style={styles.achievedBadgeText}>최종보상</Text>
-                      </View>
-                      <View style={styles.rewardSection}>
-                        <Image
-                          source={require('@/assets/sword.png')}
-                          style={{
-                            width: 64,
-                            height: 64,
-                            backgroundColor: QuestineColors.SKY_100,
-                            borderRadius: 4,
-                            borderWidth: 3,
-                          }}
-                          resizeMode='contain'
-                        />
-                        <Image
-                          source={require('@/assets/iron_sword.png')}
-                          style={{
-                            width: 64,
-                            height: 64,
-                            backgroundColor: QuestineColors.SKY_100,
-                            borderRadius: 4,
-                            borderWidth: 3,
-                          }}
-                          resizeMode='contain'
-                        />
-                      </View>
-                      <Text style={styles.rewardValue}>+100 XP</Text>
                     </View>
                   )}
                 </View>
@@ -381,6 +353,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   bottomPadding: {
-    height: 0,
+    height: 96,
   },
 });
