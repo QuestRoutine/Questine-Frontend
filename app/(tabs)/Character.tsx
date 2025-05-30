@@ -25,15 +25,6 @@ const characterImages: Record<CharacterImageType, any> = {
   expert: require('@/assets/images/characters/class1.png'), // 레벨 11+
 };
 
-// 아이템 카테고리
-const ITEM_CATEGORIES = [
-  { id: 'all', name: '전체' },
-  { id: 'weapon', name: '무기' },
-  { id: 'armor', name: '갑옷' },
-  { id: 'shield', name: '방패' },
-  { id: 'consumable', name: '소비품' },
-];
-
 type levelProps = {
   level: number;
   exp: number;
@@ -83,38 +74,6 @@ export default function CharacterScreen() {
     fetchAchievements();
   }, [isFocused]);
 
-  const [activeTab, setActiveTab] = useState('character');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-
-  // 애니메이션 값들
-  const tabSwitchAnim = useRef(new Animated.Value(0)).current;
-  const goldAnim = useRef(new Animated.Value(1)).current;
-
-  // 골드 변화 애니메이션
-  const animateGoldChange = () => {
-    Animated.sequence([
-      Animated.timing(goldAnim, {
-        toValue: 1.2,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(goldAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  // 탭 전환 애니메이션
-  const switchTab = (tab: string) => {
-    setActiveTab(tab);
-    Animated.spring(tabSwitchAnim, {
-      toValue: tab === 'character' ? 0 : 1,
-      useNativeDriver: true,
-    }).start();
-  };
-
   // 레벨에 따라 캐릭터 이미지 결정
   const getCharacterImage = (): any => {
     const level = MOCK_USER.level;
@@ -127,143 +86,118 @@ export default function CharacterScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Animated.View style={{ transform: [{ scale: 1 }] }}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
           <Text style={styles.title}>✨ 캐릭터 ✨</Text>
-        </Animated.View>
-      </View>
-
-      {activeTab === 'character' ? (
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* 캐릭터 카드 영역 */}
-          <View style={[styles.msCharacterCard, { backgroundColor: '#fff' }]}>
-            <View style={styles.msAvatarWrapper}>
-              <View style={styles.msAvatarCircle}>
-                <Image source={getCharacterImage()} style={styles.msAvatarImage} resizeMode='cover' />
-              </View>
-            </View>
-            {/* 닉네임 */}
-            <Text numberOfLines={1} style={styles.msNickname}>
-              {characterInfo?.character_name}
-            </Text>
-            {/* 레벨 */}
-            <View style={styles.msBadgesRow}>
-              <View style={[styles.msBadge, { backgroundColor: QuestineColors.SKY_300 }]}>
-                <Text style={styles.msBadgeText}>Lv.{characterInfo?.level ?? 1}</Text>
-              </View>
-            </View>
-            {/* 경험치바 */}
-            <View style={styles.msExpBarWrapper}>
-              <View style={styles.msExpBarBg}>
-                <View
-                  style={[
-                    styles.msExpBarFill,
-                    {
-                      width: `${((characterInfo?.exp ?? 0) / (characterInfo?.nextLevelExp ?? 1)) * 100}%`,
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={styles.msExpBarText}>
-                {characterInfo?.exp} / {characterInfo?.nextLevelExp} EXP
-              </Text>
+        </View>
+        {/* 캐릭터 카드 영역 */}
+        <View style={[styles.msCharacterCard, { backgroundColor: '#fff' }]}>
+          <View style={styles.msAvatarWrapper}>
+            <View style={styles.msAvatarCircle}>
+              <Image source={getCharacterImage()} style={styles.msAvatarImage} resizeMode='cover' />
             </View>
           </View>
-
-          {/* 내가 획득한 업적 */}
-          <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10, color: '#667eea' }}>
-              🏆 내가 획득한 업적
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
-              {achievements.filter((item) => item.is_unlocked).length === 0 && (
-                <Text style={{ color: '#aaa', fontSize: 14 }}>아직 획득한 업적이 없습니다.</Text>
-              )}
-              {achievements
-                .filter((item) => item.is_unlocked)
-                .map((item) => (
-                  <View key={item.achievement_id} style={{ alignItems: 'center' }}>
-                    <View
-                      style={{
-                        backgroundColor: '#ffe066',
-                        borderRadius: 30,
-                        width: 54,
-                        height: 54,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginBottom: 4,
-                      }}
-                    >
-                      <Text style={{ fontSize: 28 }}>{item.icon ? item.icon : '🍭'}</Text>
-                    </View>
-                    <Text style={{ fontSize: 12, color: '#888', fontWeight: '600' }} numberOfLines={1}>
-                      {item.title ?? '업적'}
-                    </Text>
-                  </View>
-                ))}
-            </ScrollView>
-          </View>
-
-          {/* 용자와 랭킹 비교 */}
-          <View style={{ marginBottom: 32 }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10, color: '#667eea' }}>
-              👥 사용자와 랭킹 비교
-            </Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                backgroundColor: '#f8fafc',
-                borderRadius: 18,
-                padding: 18,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 18,
-              }}
-            >
-              {/* 내 캐릭터 */}
-              <View style={{ alignItems: 'center', flex: 1 }}>
-                <Text style={{ fontWeight: 'bold', color: '#667eea', marginBottom: 6 }}>나</Text>
-                <View style={{ backgroundColor: '#fffbe6', borderRadius: 16, padding: 8, marginBottom: 6 }}>
-                  <Text style={{ fontSize: 22 }}>🧙‍♂️</Text>
-                </View>
-                <Text style={{ fontSize: 13, color: '#888' }}>Lv.{characterInfo?.level ?? 1}</Text>
-              </View>
-              {/* 구분선 */}
-              <View style={{ width: 1, height: 70, backgroundColor: '#e9ecef', marginHorizontal: 8 }} />
-              {/* 친구(또는 평균) */}
-              <View style={{ alignItems: 'center', flex: 1 }}>
-                <Text style={{ fontWeight: 'bold', color: '#888', marginBottom: 6 }}>이용자 평균</Text>
-                <View style={{ backgroundColor: '#e9ecef', borderRadius: 16, padding: 8, marginBottom: 6 }}>
-                  <Text style={{ fontSize: 22 }}>🧑‍🤝‍🧑</Text>
-                </View>
-                <Text style={{ fontSize: 13, color: '#888' }}>Lv.3</Text>
-              </View>
+          {/* 닉네임 */}
+          <Text numberOfLines={1} style={styles.msNickname}>
+            {characterInfo?.character_name}
+          </Text>
+          {/* 레벨 */}
+          <View style={styles.msBadgesRow}>
+            <View style={[styles.msBadge, { backgroundColor: QuestineColors.SKY_300 }]}>
+              <Text style={styles.msBadgeText}>Lv.{characterInfo?.level ?? 1}</Text>
             </View>
           </View>
-        </ScrollView>
-      ) : (
-        <View style={styles.shopContainer}>
-          {/* 카테고리 바 */}
-          <View style={styles.categoriesBarCenter}>
-            {ITEM_CATEGORIES.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[styles.categoryButton, selectedCategory === category.id && styles.categoryButtonActive]}
-                onPress={() => setSelectedCategory(category.id)}
-              >
-                <Text
-                  style={[
-                    styles.categoryButtonText,
-                    selectedCategory === category.id && styles.categoryButtonTextActive,
-                  ]}
-                >
-                  {category.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          {/* 경험치바 */}
+          <View style={styles.msExpBarWrapper}>
+            <View style={styles.msExpBarBg}>
+              <View
+                style={[
+                  styles.msExpBarFill,
+                  {
+                    width: `${((characterInfo?.exp ?? 0) / (characterInfo?.nextLevelExp ?? 1)) * 100}%`,
+                  },
+                ]}
+              />
+            </View>
+            <Text style={styles.msExpBarText}>
+              {characterInfo?.exp} / {characterInfo?.nextLevelExp} EXP
+            </Text>
           </View>
         </View>
-      )}
+
+        {/* 내가 획득한 업적 */}
+        <View style={{ marginBottom: 24 }}>
+          <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10, color: '#667eea' }}>
+            🏆 내가 획득한 업적
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+            {achievements.filter((item) => item.is_unlocked).length === 0 && (
+              <Text style={{ color: '#aaa', fontSize: 14 }}>아직 획득한 업적이 없습니다.</Text>
+            )}
+            {achievements
+              .filter((item) => item.is_unlocked)
+              .map((item) => (
+                <View key={item.achievement_id} style={{ alignItems: 'center' }}>
+                  <View
+                    style={{
+                      backgroundColor: '#ffe066',
+                      borderRadius: 30,
+                      width: 54,
+                      height: 54,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      marginBottom: 4,
+                    }}
+                  >
+                    <Text style={{ fontSize: 28 }}>{item.icon ? item.icon : '🍭'}</Text>
+                  </View>
+                  <Text style={{ fontSize: 12, color: '#888', fontWeight: '600' }} numberOfLines={1}>
+                    {item.title ?? '업적'}
+                  </Text>
+                </View>
+              ))}
+          </ScrollView>
+        </View>
+
+        {/* 용자와 랭킹 비교 */}
+        <View style={{ marginBottom: 32 }}>
+          <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10, color: '#667eea' }}>
+            👥 사용자와 랭킹 비교
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: '#f8fafc',
+              borderRadius: 18,
+              padding: 18,
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 18,
+            }}
+          >
+            {/* 내 캐릭터 */}
+            <View style={{ alignItems: 'center', flex: 1 }}>
+              <Text style={{ fontWeight: 'bold', color: '#667eea', marginBottom: 6 }}>나</Text>
+              <View style={{ backgroundColor: '#fffbe6', borderRadius: 16, padding: 8, marginBottom: 6 }}>
+                <Text style={{ fontSize: 22 }}>🧙‍♂️</Text>
+              </View>
+              <Text style={{ fontSize: 13, color: '#888' }}>Lv.{characterInfo?.level ?? 1}</Text>
+            </View>
+            {/* 구분선 */}
+            <View style={{ width: 1, height: 70, backgroundColor: '#e9ecef', marginHorizontal: 8 }} />
+            {/* 친구(또는 평균) */}
+            <View style={{ alignItems: 'center', flex: 1 }}>
+              <Text style={{ fontWeight: 'bold', color: '#888', marginBottom: 6 }}>이용자 평균</Text>
+              <View style={{ backgroundColor: '#e9ecef', borderRadius: 16, padding: 8, marginBottom: 6 }}>
+                <Text style={{ fontSize: 22 }}>🧑‍🤝‍🧑</Text>
+              </View>
+              <Text style={{ fontSize: 13, color: '#888' }}>Lv.3</Text>
+            </View>
+          </View>
+        </View>
+        {/* 하단 여백 */}
+        <View style={{ height: 96 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -381,43 +315,5 @@ const styles = StyleSheet.create({
     textShadowColor: '#fffbe6',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-  },
-  shopContainer: {
-    flex: 1,
-    backgroundColor: '#f6f7fa',
-  },
-  categoriesBarCenter: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 8,
-    marginHorizontal: 0,
-    paddingHorizontal: 0,
-  },
-  categoryButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 22,
-    marginHorizontal: 6,
-    backgroundColor: '#e9ecef',
-    borderWidth: 2,
-    borderColor: '#f6f7fa',
-  },
-  categoryButtonActive: {
-    backgroundColor: '#ffe066',
-    borderColor: '#ffd43b',
-    shadowColor: '#ffd43b',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  categoryButtonText: {
-    fontWeight: 'bold',
-    fontSize: 15,
-    color: '#888',
-  },
-  categoryButtonTextActive: {
-    color: '#b19700',
   },
 });
