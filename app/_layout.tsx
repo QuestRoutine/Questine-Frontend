@@ -11,6 +11,7 @@ import queryClient from '@/api/queryClient';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import CustomToast, { CustomToastProps } from '@/components/ui/CustomToast';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -42,6 +43,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   );
 
   function RootNavigator() {
+    const toastConfig = {
+      custom: (props: CustomToastProps) => <CustomToast {...props} />,
+      customSuccess: (props: CustomToastProps) => <CustomToast {...props} />,
+      error: (props: CustomToastProps) => <CustomToast {...props} />,
+      info: (props: CustomToastProps) => <CustomToast {...props} />,
+      warning: (props: CustomToastProps) => <CustomToast {...props} />,
+    };
     return (
       <>
         <Stack>
@@ -50,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Stack.Screen name='settings' options={{ headerShown: true, title: '설정' }} />
           <Stack.Screen name='+not-found' />
         </Stack>
-        <Toast />
+        <Toast config={toastConfig} />
         <StatusBar style='dark' backgroundColor='transparent' />
       </>
     );

@@ -1,6 +1,8 @@
 import axiosInstance from '@/api/axios';
 import queryClient from '@/api/queryClient';
+import { QuestineColors } from '@/constants/Colors';
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
@@ -159,15 +161,23 @@ export function useToggleTodoComplete(year?: number, month?: number) {
       return { previousTodos };
     },
 
-    onError: (_err, _variables, context) => {
+    onError: (err: AxiosError, _variables, context) => {
       if (context?.previousTodos) {
         queryClient.setQueryData(queryKey, context.previousTodos);
       }
-      Toast.show({
-        type: 'error',
-        text1: '오류',
-        text2: '할 일 완료 상태를 변경하는 데 실패했습니다.',
-      });
+      const errorData = err.response?.data as { message?: string; cheatingDetected?: boolean } | undefined;
+
+      if (errorData) {
+        Toast.show({
+          type: 'custom',
+          text1: '오류',
+          text2: `${errorData.message || '할 일을 업데이트하는 데 실패했습니다.'}`,
+          props: {
+            icon: require('@/assets/sword.png'),
+            color: QuestineColors.RED_300,
+          },
+        });
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
