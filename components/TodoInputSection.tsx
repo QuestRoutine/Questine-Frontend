@@ -28,8 +28,8 @@ const TodoInputSection = memo(function TodoInputSection({ addTodo, isLoading }: 
         placeholderTextColor='#888'
         autoCapitalize='none'
         autoFocus={false}
-        editable={!isLoading}
         onSubmitEditing={handleAdd}
+        submitBehavior='submit'
         returnKeyType='done'
       />
       <TouchableOpacity

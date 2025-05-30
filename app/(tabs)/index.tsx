@@ -9,6 +9,7 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  Keyboard,
 } from 'react-native';
 import { CalendarList, DateData } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
@@ -398,6 +399,7 @@ export default function HomeScreen() {
       setIsRefreshing(false);
     }
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAwareScrollView
@@ -450,7 +452,6 @@ export default function HomeScreen() {
           {selected ? (
             <View style={styles.todoSection}>
               <Text style={styles.selectedDateText}>{selected} 할 일</Text>
-
               <TodoInputSection addTodo={addTodo} isLoading={addTodoMutation.status === 'pending'} />
               <TodoList filteredTodos={filteredTodos} handleToggleTodo={handleToggleTodo} deleteTodo={deleteTodoMemo} />
             </View>
