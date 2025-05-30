@@ -47,6 +47,14 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name='Rank'
+          options={{
+            title: '랭킹',
+            tabBarActiveTintColor: 'hotpink',
+            tabBarIcon: ({ color }) => <User size={20} color={color} />,
+          }}
+        />
+        <Tabs.Screen
           name='Profile'
           options={{
             title: '프로필',
