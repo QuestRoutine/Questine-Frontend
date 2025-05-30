@@ -429,11 +429,13 @@ export default function HomeScreen() {
             accessibilityLabel='Questine Logo'
           />
         </View>
-        {todosLoading && (
+
+        {todosLoading && currentMonth === today && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size='large' color='hotpink' />
           </View>
         )}
+
         <>
           <CalendarList
             key={currentMonth}
