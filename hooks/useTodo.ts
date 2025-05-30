@@ -21,10 +21,11 @@ interface Todo {
   due_at: string;
 }
 
-const MONTH_OFFSET = 1;
+const getTodosQueryKey = (year: number, month: number) => ['todos', year, month] as const;
+export const DATE_FORMAT = 'YYYY-MM-DD';
+const now = dayjs();
 
 function useAddTodo(year?: number, month?: number, onSuccessCallback?: () => void) {
-  const now = dayjs().local();
   const queryYear = year ?? now.year();
   const queryMonth = month ?? now.month() + 1;
   const queryKey = getTodosQueryKey(queryYear, queryMonth);
@@ -51,7 +52,7 @@ function useAddTodo(year?: number, month?: number, onSuccessCallback?: () => voi
           todo_id: tempId,
           content: newTodoParams.content,
           completed: false,
-          created_at: dayjs().local().format('YYYY-MM-DD'),
+          created_at: dayjs().format(DATE_FORMAT),
           exp_reward: 0,
           due_at: newTodoParams.due_at,
         },
@@ -81,11 +82,8 @@ function useAddTodo(year?: number, month?: number, onSuccessCallback?: () => voi
   return mutation;
 }
 
-const getTodosQueryKey = (year: number, month: number) => ['todos', year, month] as const;
-
 // 할 일 목록 조회
 export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], Error> {
-  const now = dayjs().local();
   const queryYear = year ?? now.year();
   const queryMonth = month ?? now.month() + 1;
 
@@ -102,9 +100,9 @@ export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], 
         todo_id: item.todo_id,
         content: item.content,
         completed: item.completed,
-        created_at: dayjs(item.created_at).local().format('YYYY-MM-DD'),
+        created_at: dayjs(item.created_at).format(DATE_FORMAT),
         exp_reward: item.exp_reward,
-        due_at: dayjs(item.due_at).local(),
+        due_at: dayjs(item.due_at),
       }));
     },
     refetchOnWindowFocus: false,
@@ -124,7 +122,6 @@ export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], 
 
 // 할 일 완료/미완료 토글 (낙관적 업데이트)
 export function useToggleTodoComplete(year?: number, month?: number) {
-  const now = dayjs().local();
   const queryYear = year ?? now.year();
   const queryMonth = month ?? now.month() + 1;
   const queryKey = getTodosQueryKey(queryYear, queryMonth);
@@ -186,7 +183,6 @@ export function useToggleTodoComplete(year?: number, month?: number) {
 }
 
 export function useDeleteTodo(year?: number, month?: number) {
-  const now = dayjs().local();
   const queryYear = year ?? now.year();
   const queryMonth = month ?? now.month() + 1;
   const queryKey = getTodosQueryKey(queryYear, queryMonth);

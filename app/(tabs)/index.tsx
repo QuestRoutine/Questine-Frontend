@@ -15,7 +15,7 @@ import Toast from 'react-native-toast-message';
 import '@/constants/Calendars';
 import { useIsFocused } from '@react-navigation/native';
 import { CalendarHeaderProps } from 'react-native-calendars/src/calendar/header';
-import { useAddTodo, useDeleteTodo, useTodos, useToggleTodoComplete } from '@/hooks/useTodo';
+import { DATE_FORMAT, useAddTodo, useDeleteTodo, useTodos, useToggleTodoComplete } from '@/hooks/useTodo';
 import dayjs from 'dayjs';
 import TodoInputSection from '../../components/TodoInputSection';
 import TodoList from '../../components/TodoList';
@@ -55,8 +55,7 @@ interface Todo {
 
 export default function HomeScreen() {
   const isFocused = useIsFocused();
-  const today = new Date().toISOString();
-  const todayStr = dayjs().tz('Asia/Seoul').format('YYYY-MM-DD');
+  const today = dayjs().format(DATE_FORMAT);
   const [selected, setSelected] = useState(today);
   const [currentMonth, setCurrentMonth] = useState(today);
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
@@ -68,14 +67,14 @@ export default function HomeScreen() {
   const deleteTodoMutation = useDeleteTodo(+year, +month);
 
   useEffect(() => {
-    setSelected(todayStr);
-  }, [todayStr]);
+    setSelected(today);
+  }, [today]);
 
   const updateAllMarkedDates = useCallback(() => {
     const newMarkedDates: MarkedDates = {};
     const formattedTodos = todos.map((todo) => ({
       ...todo,
-      formattedDate: dayjs(todo.due_at).local().format('YYYY-MM-DD'),
+      formattedDate: dayjs(todo.due_at).format(DATE_FORMAT),
     }));
 
     const uniqueDates = [...new Set(formattedTodos.map((todo) => todo.formattedDate))];
@@ -135,8 +134,8 @@ export default function HomeScreen() {
   const onMonthChange = (month: DateData) => {
     const newMonth = `${month.year}-${String(month.month).padStart(2, '0')}-01`;
     setCurrentMonth(newMonth);
-    if (month.month === +todayStr.split('-')[1]) {
-      setSelected(todayStr);
+    if (month.month === +today.split('-')[1]) {
+      setSelected(today);
     } else {
       setSelected(newMonth);
     }
@@ -146,12 +145,11 @@ export default function HomeScreen() {
   const addTodo = useCallback(
     (content: string) => {
       if (!content.trim() || !selected) return;
-      const now = dayjs().local();
-      console.log(now.hour(), now.minute(), now.second());
-      const dueAt = dayjs.tz(selected, 'Asia/Seoul').hour(now.hour()).minute(now.minute()).second(now.second());
+      const now = dayjs();
+      const dueAt = dayjs(selected).hour(now.hour()).minute(now.minute()).second(now.second());
       addTodoMutation.mutate({
         content,
-        due_at: dueAt.toISOString(),
+        due_at: dueAt.format('YYYY-MM-DD HH:mm:ss'),
       });
     },
     [addTodoMutation, selected]
@@ -178,7 +176,7 @@ export default function HomeScreen() {
 
   const filteredTodos = useMemo(() => {
     const filteredItems = todos.filter((todo) => {
-      const localDueDate = dayjs(todo.due_at).local().format('YYYY-MM-DD');
+      const localDueDate = dayjs(todo.due_at).format(DATE_FORMAT);
       return localDueDate === selected;
     });
 
@@ -309,9 +307,9 @@ export default function HomeScreen() {
   const customHeader = (props: CalendarHeaderProps) => {
     const year = props.month?.getFullYear();
     const month = props.month?.getMonth() + 1;
-    const today = new Date();
+    const today = dayjs();
     const isCurrentMonth =
-      props.month && props.month.getFullYear() === today.getFullYear() && props.month.getMonth() === today.getMonth();
+      props.month && props.month.getFullYear() === today.year() && props.month.getMonth() === today.month();
 
     // 월 변경 시 호출할 공통 함수
     const handleMonthChange = (monthOffset: number) => {
@@ -333,13 +331,13 @@ export default function HomeScreen() {
 
     // 오늘 이동 함수
     const goToToday = () => {
-      setSelected(todayStr);
+      setSelected(today.format(DATE_FORMAT));
       // 달력의 현재 월과 오늘 날짜의 월 차이 계산
       if (props.month) {
         const currentMonth = props.month.getMonth();
-        const targetMonth = today.getMonth();
+        const targetMonth = today.month();
         const currentYear = props.month.getFullYear();
-        const targetYear = today.getFullYear();
+        const targetYear = today.year();
 
         // 연도 차이 고려한 월 차이 계산
         const monthDiff = (targetYear - currentYear) * 12 + (targetMonth - currentMonth);
