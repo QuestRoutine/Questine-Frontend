@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, SafeAreaView, TouchableOpacity, Image, Platform } from 'react-native';
 
 interface RankingUser {
   userId: number;
@@ -87,7 +87,10 @@ export default function Rank() {
   const myRank = ranking.findIndex((user) => user.nickname === '나') + 1;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
+    <ScrollView
+      style={[{ paddingTop: Platform.OS === 'android' ? 50 : 0 }, styles.container]}
+      contentContainerStyle={{ padding: 20 }}
+    >
       <SafeAreaView>
         {/* 랭킹 필터 탭 */}
         <View style={styles.filterBar}>

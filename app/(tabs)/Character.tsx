@@ -1,5 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+  Animated,
+  Platform,
+} from 'react-native';
 import { UserCharacter, CharacterImageType } from '@/types/character';
 import { QuestineColors } from '@/constants/Colors';
 import axiosInstance from '@/api/axios';
@@ -85,7 +95,7 @@ export default function CharacterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[{ paddingTop: Platform.OS === 'android' ? 50 : 0 }, styles.container]}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>✨ 캐릭터 ✨</Text>

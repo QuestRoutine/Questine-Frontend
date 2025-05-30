@@ -9,6 +9,7 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { CalendarList, DateData } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
@@ -22,6 +23,7 @@ import TodoList from '../../components/TodoList';
 import { SingleDotDay, MultiDotDay, EmptyDay } from '../../components/CalendarDayCells';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { QuestineColors } from '@/constants/Colors';
+import { StatusBar } from 'expo-status-bar';
 type MarkedDates = {
   [date: string]: {
     selected?: boolean;
@@ -401,7 +403,7 @@ export default function HomeScreen() {
   }, [refetch]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[{ paddingTop: Platform.OS === 'android' ? 50 : 0 }, styles.container]}>
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         enableOnAndroid

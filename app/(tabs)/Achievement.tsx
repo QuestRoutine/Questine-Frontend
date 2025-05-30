@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, Image } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, Image, Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Colors, QuestineColors } from '@/constants/Colors';
 import axiosInstance from '@/api/axios';
@@ -48,7 +48,7 @@ export default function Award() {
 
   return (
     <ScrollView>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[{ paddingTop: Platform.OS === 'android' ? 50 : 0 }, styles.container]}>
         <Modal
           isVisible={modalVisible}
           style={styles.modal}

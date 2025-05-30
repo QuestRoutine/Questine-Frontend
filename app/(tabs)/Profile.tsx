@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
@@ -79,7 +79,7 @@ export default function Profile() {
 
   const membershipDays = calculateMembershipDuration();
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[{ paddingTop: Platform.OS === 'android' ? 50 : 0 }, styles.container]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* 프로필 헤더 섹션 */}
         <View style={styles.profileHeader}>
