@@ -205,21 +205,11 @@ export function useDeleteTodo(year?: number, month?: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      Toast.show({
-        type: 'success',
-        text1: '할 일 삭제',
-        text2: '할 일이 성공적으로 삭제되었습니다.',
-      });
     },
     onError: (_err, _variables, context) => {
       if (context?.previousTodos) {
         queryClient.setQueryData(queryKey, context.previousTodos);
       }
-      Toast.show({
-        type: 'error',
-        text1: '오류',
-        text2: '할 일을 삭제하는 데 실패했습니다.',
-      });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
