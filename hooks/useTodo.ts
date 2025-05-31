@@ -6,6 +6,7 @@ import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
+import { loadTodosStorage, saveTodosStorage } from './useTodoStorage';
 
 interface AddTodoParams {
   content: string;
@@ -25,10 +26,15 @@ const getTodosQueryKey = (year: number, month: number) => ['todos', year, month]
 export const DATE_FORMAT = 'YYYY-MM-DD';
 const now = dayjs();
 
+function getTodosStorageKey(year: number, month: number) {
+  return `todos-${year}-${month}`;
+}
+
 function useAddTodo(year?: number, month?: number, onSuccessCallback?: () => void) {
   const queryYear = year ?? now.year();
   const queryMonth = month ?? now.month() + 1;
   const queryKey = getTodosQueryKey(queryYear, queryMonth);
+  const storageKey = getTodosStorageKey(queryYear, queryMonth);
 
   const mutation = useMutation({
     mutationFn: async (params: AddTodoParams) => {
@@ -41,32 +47,33 @@ function useAddTodo(year?: number, month?: number, onSuccessCallback?: () => voi
     },
     onMutate: async (newTodoParams: AddTodoParams) => {
       await queryClient.cancelQueries({ queryKey });
-      const previousTodos = queryClient.getQueryData<Todo[]>(queryKey);
+      const previousTodos = queryClient.getQueryData<Todo[]>(queryKey) ?? [];
 
       // 임시 ID
       const tempId = Date.now();
+      const optimisticTodo: Todo = {
+        todo_id: tempId,
+        content: newTodoParams.content,
+        completed: false,
+        created_at: dayjs().format(DATE_FORMAT),
+        exp_reward: 0,
+        due_at: newTodoParams.due_at,
+      };
 
-      queryClient.setQueryData<Todo[]>(queryKey, (old = []) => [
-        ...old,
-        {
-          todo_id: tempId,
-          content: newTodoParams.content,
-          completed: false,
-          created_at: dayjs().format(DATE_FORMAT),
-          exp_reward: 0,
-          due_at: newTodoParams.due_at,
-        },
-      ]);
+      const newTodos = [...previousTodos, optimisticTodo];
+      queryClient.setQueryData<Todo[]>(queryKey, newTodos);
+      await saveTodosStorage(storageKey, newTodos);
 
       return { previousTodos };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey });
       if (onSuccessCallback) onSuccessCallback();
     },
-    onError: (error, _variables, context) => {
+    onError: async (error, _variables, context) => {
       if (context?.previousTodos) {
         queryClient.setQueryData(queryKey, context.previousTodos);
+        await saveTodosStorage(storageKey, context.previousTodos);
       }
       Toast.show({
         type: 'error',
@@ -86,17 +93,20 @@ function useAddTodo(year?: number, month?: number, onSuccessCallback?: () => voi
 export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], Error> {
   const queryYear = year ?? now.year();
   const queryMonth = month ?? now.month() + 1;
+  const storageKey = getTodosStorageKey(queryYear, queryMonth);
 
   const data = useQuery<Todo[], Error, Todo[], any>({
     queryKey: getTodosQueryKey(queryYear, queryMonth),
     queryFn: async () => {
+      // 로컬 스토리지
+      const localTodos = (await loadTodosStorage(storageKey)) ?? [];
       const { data } = await axiosInstance.get('/todo', {
         params: {
           year: queryYear,
           month: queryMonth,
         },
       });
-      return data.map((item: Todo) => ({
+      const serverTodos = data.map((item: Todo) => ({
         todo_id: item.todo_id,
         content: item.content,
         completed: item.completed,
@@ -104,9 +114,12 @@ export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], 
         exp_reward: item.exp_reward,
         due_at: dayjs(item.due_at),
       }));
+      await saveTodosStorage(storageKey, serverTodos);
+      return serverTodos.length > 0 ? serverTodos : localTodos;
     },
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
+    initialData: [],
   });
   useEffect(() => {
     if (data.error) {
@@ -120,11 +133,12 @@ export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], 
   return data;
 }
 
-// 할 일 완료/미완료 토글 (낙관적 업데이트)
+// 할 일 완료/미완료 토글 (스토리지 동기화)
 export function useToggleTodoComplete(year?: number, month?: number) {
   const queryYear = year ?? now.year();
   const queryMonth = month ?? now.month() + 1;
   const queryKey = getTodosQueryKey(queryYear, queryMonth);
+  const storageKey = getTodosStorageKey(queryYear, queryMonth);
 
   return useMutation({
     mutationFn: async ({ todo_id, completed }: { todo_id: number; completed: boolean }) => {
@@ -136,37 +150,23 @@ export function useToggleTodoComplete(year?: number, month?: number) {
         return axiosInstance.put(`/todo/${todo_id}`, { completed });
       }
     },
-
-    // optimistic
     onMutate: async ({ todo_id, completed }) => {
       await queryClient.cancelQueries({ queryKey });
-      const previousTodos = queryClient.getQueryData<Todo[]>(queryKey);
-
-      queryClient.setQueryData<Todo[]>(queryKey, (old) =>
-        old
-          ? old.map((todo) => {
-              if (todo.todo_id !== todo_id) return todo;
-              const newCompleted = completed;
-              return {
-                ...todo,
-                completed: newCompleted,
-              };
-            })
-          : []
-      );
-
+      const previousTodos = queryClient.getQueryData<Todo[]>(queryKey) ?? [];
+      const newTodos = previousTodos.map((todo) => (todo.todo_id === todo_id ? { ...todo, completed } : todo));
+      queryClient.setQueryData<Todo[]>(queryKey, newTodos);
+      await saveTodosStorage(storageKey, newTodos);
       return { previousTodos };
     },
-
-    onError: (err: AxiosError, _variables, context) => {
+    onError: async (err: AxiosError, _variables, context) => {
       if (context?.previousTodos) {
         queryClient.setQueryData(queryKey, context.previousTodos);
+        await saveTodosStorage(storageKey, context.previousTodos);
       }
       const errorData = err.response?.data as { message?: string; cheatingDetected?: boolean } | undefined;
-
       if (errorData) {
         Toast.show({
-          type: 'custom',
+          type: 'error',
           text1: '오류',
           text2: `${errorData.message || '할 일을 업데이트하는 데 실패했습니다.'}`,
           props: {
@@ -186,6 +186,7 @@ export function useDeleteTodo(year?: number, month?: number) {
   const queryYear = year ?? now.year();
   const queryMonth = month ?? now.month() + 1;
   const queryKey = getTodosQueryKey(queryYear, queryMonth);
+  const storageKey = getTodosStorageKey(queryYear, queryMonth);
 
   return useMutation({
     mutationFn: async (todo_id: number) => {
@@ -193,18 +194,19 @@ export function useDeleteTodo(year?: number, month?: number) {
     },
     onMutate: async (todo_id: number) => {
       await queryClient.cancelQueries({ queryKey });
-      const previousTodos = queryClient.getQueryData<Todo[]>(queryKey);
-
-      queryClient.setQueryData<Todo[]>(queryKey, (old = []) => old.filter((todo) => todo.todo_id !== todo_id));
-
+      const previousTodos = queryClient.getQueryData<Todo[]>(queryKey) ?? [];
+      const newTodos = previousTodos.filter((todo) => todo.todo_id !== todo_id);
+      queryClient.setQueryData<Todo[]>(queryKey, newTodos);
+      await saveTodosStorage(storageKey, newTodos);
       return { previousTodos };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (_err, _variables, context) => {
+    onError: async (_err, _variables, context) => {
       if (context?.previousTodos) {
         queryClient.setQueryData(queryKey, context.previousTodos);
+        await saveTodosStorage(storageKey, context.previousTodos);
       }
     },
     onSettled: () => {

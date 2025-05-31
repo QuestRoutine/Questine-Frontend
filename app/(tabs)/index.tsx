@@ -124,6 +124,10 @@ export default function HomeScreen() {
     }
   }, [isFocused, refetch]);
 
+  useEffect(() => {
+    refetch();
+  }, [currentMonth]);
+
   // 날짜 누를 시, 호출되는 함수
   const onDayPress = (day: DateData) => {
     // 이전에 선택된 날짜와 새로 선택된 날짜가 다른 경우에만 색상 변경
