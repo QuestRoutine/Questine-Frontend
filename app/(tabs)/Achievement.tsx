@@ -112,25 +112,31 @@ export default function Award() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>획득한 업적</Text>
           <View style={styles.badgeGrid}>
-            {achievements.map(
-              (item: AchievementProps) =>
-                item.is_unlocked && (
-                  <TouchableOpacity
-                    key={item.achievement_id}
-                    style={styles.badgeItem}
-                    onPress={() => handleAchievementPress(item)}
-                  >
-                    <View style={[styles.badgeIcon, { backgroundColor: colors.tint + '20' }]}>
-                      <Text style={styles.badgeEmoji}>{item.icon || '🍭'}</Text>
-                    </View>
-                    <Text style={[styles.badgeName, { color: colors.text }]} numberOfLines={1}>
-                      {item.title}
-                    </Text>
-                    <Text style={[styles.badgeDesc, { color: colors.icon }]} numberOfLines={2}>
-                      {item.description}
-                    </Text>
-                  </TouchableOpacity>
-                )
+            {achievements.some((item) => item.is_unlocked) ? (
+              achievements.map(
+                (item: AchievementProps) =>
+                  item.is_unlocked && (
+                    <TouchableOpacity
+                      key={item.achievement_id}
+                      style={styles.badgeItem}
+                      onPress={() => handleAchievementPress(item)}
+                    >
+                      <View style={[styles.badgeIcon, { backgroundColor: colors.tint + '20' }]}>
+                        <Text style={styles.badgeEmoji}>{item.icon || '🍭'}</Text>
+                      </View>
+                      <Text style={[styles.badgeName, { color: colors.text }]} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text style={[styles.badgeDesc, { color: colors.icon }]} numberOfLines={2}>
+                        {item.description}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+              )
+            ) : (
+              <Text style={{ color: colors.icon, textAlign: 'center', width: '100%', marginVertical: 16 }}>
+                획득한 업적이 없습니다
+              </Text>
             )}
           </View>
         </View>
