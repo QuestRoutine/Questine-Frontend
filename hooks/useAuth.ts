@@ -2,6 +2,7 @@ import { getAccessToken, getMe, postLogout, postSignin, postSignup } from '@/api
 import queryClient from '@/api/queryClient';
 import { removeHeader, setHeader } from '@/utils/header';
 import { deleteSecureStore, setSecureStore } from '@/utils/secureStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
@@ -65,6 +66,7 @@ function useLogout() {
   return useMutation({
     mutationFn: postLogout,
     onSuccess: () => {
+      AsyncStorage.clear();
       removeHeader('Authorization');
       deleteSecureStore('accessToken');
       deleteSecureStore('refreshToken');
