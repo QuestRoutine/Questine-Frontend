@@ -60,7 +60,6 @@ export default function HomeScreen() {
   const today = dayjs().format(DATE_FORMAT);
   const [selected, setSelected] = useState(today);
   const [currentMonth, setCurrentMonth] = useState(today);
-  const [markedDates, setMarkedDates] = useState<MarkedDates>({});
 
   const [year, month] = currentMonth.split('-');
   const { data: todos = [], isLoading: todosLoading, refetch } = useTodos(+year, +month);
@@ -72,22 +71,25 @@ export default function HomeScreen() {
     setSelected(today);
   }, [today]);
 
-  const updateAllMarkedDates = useCallback(() => {
+  useEffect(() => {
+    if (isFocused) {
+      refetch();
+    }
+  }, [isFocused, currentMonth, refetch]);
+
+  const todosByDate = useMemo(() => {
+    const map: Record<string, Todo[]> = {};
+    todos.forEach((todo) => {
+      const date = dayjs(todo.due_at).format(DATE_FORMAT);
+      if (!map[date]) map[date] = [];
+      map[date].push(todo);
+    });
+    return map;
+  }, [todos]);
+
+  const markedDates = useMemo(() => {
     const newMarkedDates: MarkedDates = {};
-    const formattedTodos = todos.map((todo) => ({
-      ...todo,
-      formattedDate: dayjs(todo.due_at).format(DATE_FORMAT),
-    }));
-
-    const uniqueDates = [...new Set(formattedTodos.map((todo) => todo.formattedDate))];
-
-    uniqueDates.forEach((date) => {
-      const dayTodos = formattedTodos.filter((todo) => todo.formattedDate === date);
-
-      if (dayTodos.length === 0) {
-        return;
-      }
-
+    Object.entries(todosByDate).forEach(([date, dayTodos]) => {
       const completedTodos = dayTodos.filter((todo) => todo.completed);
       const incompleteTodos = dayTodos.filter((todo) => !todo.completed);
 
@@ -98,9 +100,7 @@ export default function HomeScreen() {
           todoCount: dayTodos.length,
         };
       } else {
-        // 완료된 할 일 색상 표시
-        const completedColors = completedTodos.map((_, index) => COLORS[index % COLORS.length]);
-
+        const completedColors = completedTodos.map((_, idx) => COLORS[idx % COLORS.length]);
         newMarkedDates[date] = {
           marked: true,
           dots: completedColors.map((color) => ({ color })),
@@ -110,31 +110,24 @@ export default function HomeScreen() {
         };
       }
     });
+    return newMarkedDates;
+  }, [todosByDate]);
 
-    setMarkedDates(newMarkedDates);
-  }, [todos]);
-
-  useEffect(() => {
-    updateAllMarkedDates();
-  }, [todos, updateAllMarkedDates]);
-
-  useEffect(() => {
-    if (isFocused) {
-      refetch();
-    }
-  }, [isFocused, refetch]);
-
-  useEffect(() => {
-    refetch();
-  }, [currentMonth]);
+  const filteredTodos = useMemo(() => {
+    const items = todosByDate[selected] || [];
+    return [...items].sort((a, b) => b.todo_id - a.todo_id);
+  }, [todosByDate, selected]);
 
   // 날짜 누를 시, 호출되는 함수
-  const onDayPress = (day: DateData) => {
-    // 이전에 선택된 날짜와 새로 선택된 날짜가 다른 경우에만 색상 변경
-    if (selected !== day.dateString) {
-      setSelected(day.dateString);
-    }
-  };
+  const onDayPress = useCallback(
+    (day: DateData) => {
+      // 이전에 선택된 날짜와 새로 선택된 날짜가 다른 경우에만 색상 변경
+      if (selected !== day.dateString) {
+        setSelected(day.dateString);
+      }
+    },
+    [selected]
+  );
 
   // 월 변경 시, 호출되는 함수
   const onMonthChange = (month: DateData) => {
@@ -179,15 +172,6 @@ export default function HomeScreen() {
     },
     [deleteTodoMutation]
   );
-
-  const filteredTodos = useMemo(() => {
-    const filteredItems = todos.filter((todo) => {
-      const localDueDate = dayjs(todo.due_at).format(DATE_FORMAT);
-      return localDueDate === selected;
-    });
-
-    return filteredItems.sort((a, b) => b.todo_id - a.todo_id);
-  }, [todos, selected]);
 
   // custom day
   const dayComponent = ({ date, state, marking }: any) => {
@@ -444,7 +428,6 @@ export default function HomeScreen() {
 
         <>
           <CalendarList
-            key={currentMonth}
             current={currentMonth}
             style={styles.calendar}
             onDayPress={onDayPress}
@@ -470,7 +453,7 @@ export default function HomeScreen() {
           )}
         </>
 
-        {/* 하단 여백을 위한 빈 공간 */}
+        {/* 하단 여백 */}
         <View style={styles.bottomPadding} />
       </KeyboardAwareScrollView>
     </SafeAreaView>
