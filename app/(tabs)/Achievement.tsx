@@ -330,10 +330,12 @@ const styles = StyleSheet.create({
   badgeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    paddingHorizontal: 8,
+    marginHorizontal: -4, // 아이템 간격 보정
   },
   badgeItem: {
-    width: '30%',
+    width: '33.33%', // 3칸
+    minWidth: 0,
     marginBottom: 16,
     alignItems: 'center',
   },
