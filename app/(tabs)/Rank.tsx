@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import axiosInstance from '@/api/axios';
+import { getMe } from '@/api/auth';
+import { useIsFocused } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, SafeAreaView, TouchableOpacity, Image, Platform } from 'react-native';
 
 interface RankingUser {
@@ -6,8 +9,7 @@ interface RankingUser {
   nickname: string;
   level: number;
   exp: number;
-  avatar?: string;
-  diff?: number; // 등락 (양수: 상승, 음수: 하락, 0: 유지)
+  avatar?: any;
 }
 
 const MOCK_RANKING: RankingUser[] = [
@@ -17,7 +19,6 @@ const MOCK_RANKING: RankingUser[] = [
     level: 12,
     exp: 3200,
     avatar: require('@/assets/images/characters/class1.png'),
-    diff: 0,
   },
   {
     userId: 2,
@@ -25,7 +26,6 @@ const MOCK_RANKING: RankingUser[] = [
     level: 10,
     exp: 2500,
     avatar: require('@/assets/images/characters/class1.png'),
-    diff: 1,
   },
   {
     userId: 3,
@@ -33,7 +33,6 @@ const MOCK_RANKING: RankingUser[] = [
     level: 8,
     exp: 1800,
     avatar: require('@/assets/images/characters/class1.png'),
-    diff: -1,
   },
   {
     userId: 4,
@@ -41,7 +40,6 @@ const MOCK_RANKING: RankingUser[] = [
     level: 5,
     exp: 900,
     avatar: require('@/assets/images/characters/class1.png'),
-    diff: 0,
   },
   {
     userId: 5,
@@ -49,7 +47,6 @@ const MOCK_RANKING: RankingUser[] = [
     level: 5,
     exp: 900,
     avatar: require('@/assets/images/characters/class1.png'),
-    diff: 0,
   },
   {
     userId: 6,
@@ -57,7 +54,6 @@ const MOCK_RANKING: RankingUser[] = [
     level: 5,
     exp: 900,
     avatar: require('@/assets/images/characters/class1.png'),
-    diff: 0,
   },
   {
     userId: 7,
@@ -65,9 +61,8 @@ const MOCK_RANKING: RankingUser[] = [
     level: 5,
     exp: 900,
     avatar: require('@/assets/images/characters/class1.png'),
-    diff: 0,
   },
-  { userId: 8, nickname: '나', level: 3, exp: 700, avatar: require('@/assets/images/characters/class1.png'), diff: 2 },
+  { userId: 8, nickname: '나', level: 3, exp: 700, avatar: require('@/assets/images/characters/class1.png') },
 ];
 
 const RANK_FILTERS = [
@@ -81,10 +76,36 @@ const RANK_FILTERS = [
 export default function Rank() {
   const [ranking, setRanking] = useState<RankingUser[]>(MOCK_RANKING);
   const [filter, setFilter] = useState('all');
+  const [myInfo, setMyInfo] = useState<RankingUser | null>(null);
+  const [myRank, setMyRank] = useState<number | null>(null);
 
-  // 내 정보 찾기
-  const myInfo = ranking.find((user) => user.nickname === '나');
-  const myRank = ranking.findIndex((user) => user.nickname === '나') + 1;
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (!isFocused) return;
+    const fetchData = async () => {
+      const me = await getMe();
+      const myNickname = me.nickname;
+      const { data } = await axiosInstance.get('/rank');
+      const mapped = data.map((item: any) => ({
+        userId: item.user_id,
+        nickname: item.nickname,
+        level: item.level,
+        exp: item.total_exp,
+        avatar: require('@/assets/images/characters/class1.png'),
+      }));
+      setRanking(mapped);
+      const my = mapped.find((user: RankingUser) => user.nickname === myNickname);
+      if (my) {
+        setMyInfo(my);
+        setMyRank(mapped.findIndex((user: RankingUser) => user.userId === my.userId) + 1);
+      } else {
+        setMyInfo(null);
+        setMyRank(null);
+      }
+    };
+    fetchData();
+  }, [isFocused]);
 
   return (
     <ScrollView
@@ -107,12 +128,12 @@ export default function Rank() {
           ))}
         </View>
         {/* 내 정보 카드 */}
-        {myInfo && (
+        {myInfo && myRank && (
           <View style={styles.myInfoCard}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Image source={myInfo.avatar} style={styles.myAvatar} />
               <View style={{ marginLeft: 12 }}>
-                <Text style={styles.myInfoName}>
+                <Text style={styles.myInfoName} numberOfLines={2}>
                   {myInfo.nickname} (내 순위: {myRank}위)
                 </Text>
                 <Text style={styles.myInfoLevel}>
@@ -133,7 +154,10 @@ export default function Rank() {
         <Text style={styles.title}>🏆 전체 캐릭터 랭킹</Text>
         <View style={styles.rankingBox}>
           {ranking.map((user, idx) => (
-            <View key={user.userId} style={[styles.rankingRow, user.nickname === '나' && styles.myRankingRow]}>
+            <View
+              key={user.userId}
+              style={[styles.rankingRow, myInfo && user.userId === myInfo.userId && styles.myRankingRow]}
+            >
               {/* 순위 및 상위 3위 뱃지 */}
               <View style={{ width: 40, alignItems: 'center' }}>
                 {idx === 0 ? (
@@ -149,21 +173,15 @@ export default function Rank() {
               {/* 캐릭터 아바타 */}
               <Image source={user.avatar} style={styles.avatarCircle} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.nickname}>{user.nickname}</Text>
+                <Text style={styles.nickname} numberOfLines={1}>
+                  {user.nickname}
+                </Text>
                 <Text style={styles.levelExp}>
                   Lv.{user.level} | {user.exp} EXP
                 </Text>
               </View>
-              {/* 랭킹 등락 */}
-              {typeof user.diff === 'number' && (
-                <Text style={styles.rankDiff}>
-                  {user.diff > 0 && `▲${user.diff}`}
-                  {user.diff < 0 && `▼${Math.abs(user.diff)}`}
-                  {user.diff === 0 && '-'}
-                </Text>
-              )}
               {/* 내 정보 뱃지 */}
-              {user.nickname === '나' && (
+              {myInfo && user.userId === myInfo.userId && (
                 <View style={styles.meBadge}>
                   <Text style={styles.meBadgeText}>ME</Text>
                 </View>
@@ -325,12 +343,5 @@ const styles = StyleSheet.create({
   rankCrown: {
     fontSize: 28,
     marginBottom: 2,
-  },
-  rankDiff: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    width: 40,
-    textAlign: 'center',
   },
 });
