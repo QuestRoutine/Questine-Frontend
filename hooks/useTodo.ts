@@ -57,7 +57,7 @@ function useAddTodo(year?: number, month?: number, onSuccessCallback?: () => voi
         completed: false,
         created_at: dayjs().format(DATE_FORMAT),
         exp_reward: 0,
-        due_at: newTodoParams.due_at,
+        due_at: dayjs(newTodoParams.due_at).format(DATE_FORMAT),
       };
 
       const newTodos = [...previousTodos, optimisticTodo];
@@ -99,7 +99,12 @@ export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], 
     queryKey: getTodosQueryKey(queryYear, queryMonth),
     queryFn: async () => {
       // 로컬 스토리지
-      const localTodos = (await loadTodosStorage(storageKey)) ?? [];
+      const localTodosRaw = (await loadTodosStorage(storageKey)) ?? [];
+      const localTodos = localTodosRaw.map((item: Todo) => ({
+        ...item,
+        due_at: dayjs(item.due_at).format(DATE_FORMAT),
+      }));
+
       const { data } = await axiosInstance.get('/todo', {
         params: {
           year: queryYear,
@@ -112,7 +117,7 @@ export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], 
         completed: item.completed,
         created_at: dayjs(item.created_at).format(DATE_FORMAT),
         exp_reward: item.exp_reward,
-        due_at: dayjs(item.due_at),
+        due_at: dayjs(item.due_at).format(DATE_FORMAT),
       }));
       await saveTodosStorage(storageKey, serverTodos);
       return serverTodos.length > 0 ? serverTodos : localTodos;
@@ -141,13 +146,13 @@ export function useToggleTodoComplete(year?: number, month?: number) {
   const storageKey = getTodosStorageKey(queryYear, queryMonth);
 
   return useMutation({
-    mutationFn: async ({ todo_id, completed }: { todo_id: number; completed: boolean }) => {
+    mutationFn: async ({ todo_id, completed, content }: { todo_id: number; completed: boolean; content: string }) => {
       if (completed) {
         // 완료 처리
         return axiosInstance.post(`/todo/done/${todo_id}`, null);
       } else {
         // 미완료 처리
-        return axiosInstance.put(`/todo/${todo_id}`, { completed });
+        return axiosInstance.put(`/todo/${todo_id}`, { completed, content });
       }
     },
     onMutate: async ({ todo_id, completed }) => {

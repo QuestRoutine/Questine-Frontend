@@ -133,7 +133,11 @@ export default function HomeScreen() {
   const onMonthChange = (month: DateData) => {
     const newMonth = `${month.year}-${String(month.month).padStart(2, '0')}-01`;
     setCurrentMonth(newMonth);
-    if (month.month === +today.split('-')[1]) {
+
+    // 연도와 월이 모두 오늘과 같을 때만
+    const isSameYearAndMonth = month.year === dayjs(today).year() && month.month === dayjs(today).month() + 1;
+
+    if (isSameYearAndMonth) {
       setSelected(today);
     } else {
       setSelected(newMonth);
