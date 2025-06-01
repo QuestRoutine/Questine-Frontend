@@ -24,6 +24,7 @@ import { SingleDotDay, MultiDotDay, EmptyDay } from '../../components/CalendarDa
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { QuestineColors } from '@/constants/Colors';
 import { StatusBar } from 'expo-status-bar';
+import * as Haptics from 'expo-haptics';
 type MarkedDates = {
   [date: string]: {
     selected?: boolean;
@@ -170,6 +171,7 @@ export default function HomeScreen() {
         completed: !todo.completed,
         content: todo.content,
       });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
     },
     [toggleTodoComplete]
   );
