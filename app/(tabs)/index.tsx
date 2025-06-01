@@ -129,14 +129,18 @@ export default function HomeScreen() {
     [selected]
   );
 
+  // 오늘 이동 함수
+  const goToToday = () => {
+    setCurrentMonth(today);
+    setSelected(today);
+  };
+
   // 월 변경 시, 호출되는 함수
   const onMonthChange = (month: DateData) => {
     const newMonth = `${month.year}-${String(month.month).padStart(2, '0')}-01`;
     setCurrentMonth(newMonth);
 
-    // 연도와 월이 모두 오늘과 같을 때만
     const isSameYearAndMonth = month.year === dayjs(today).year() && month.month === dayjs(today).month() + 1;
-
     if (isSameYearAndMonth) {
       setSelected(today);
     } else {
@@ -164,6 +168,7 @@ export default function HomeScreen() {
       toggleTodoComplete.mutate({
         todo_id: todo.todo_id,
         completed: !todo.completed,
+        content: todo.content,
       });
     },
     [toggleTodoComplete]
@@ -320,25 +325,6 @@ export default function HomeScreen() {
           timestamp: newDate.getTime(),
           dateString: `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}-01`,
         });
-      }
-    };
-
-    // 오늘 이동 함수
-    const goToToday = () => {
-      setSelected(today.format(DATE_FORMAT));
-      // 달력의 현재 월과 오늘 날짜의 월 차이 계산
-      if (props.month) {
-        const currentMonth = props.month.getMonth();
-        const targetMonth = today.month();
-        const currentYear = props.month.getFullYear();
-        const targetYear = today.year();
-
-        // 연도 차이 고려한 월 차이 계산
-        const monthDiff = (targetYear - currentYear) * 12 + (targetMonth - currentMonth);
-
-        if (monthDiff !== 0) {
-          handleMonthChange(monthDiff);
-        }
       }
     };
 
