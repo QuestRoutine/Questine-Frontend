@@ -1,63 +1,25 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  Animated,
-  Platform,
-} from 'react-native';
-import { UserCharacter, CharacterImageType } from '@/types/character';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, SafeAreaView, Platform, ImageSourcePropType } from 'react-native';
+import { AchievementProps, CharacterImageType, LevelProps } from '@/types/character';
 import { QuestineColors } from '@/constants/Colors';
 import axiosInstance from '@/api/axios';
 import { useIsFocused } from '@react-navigation/native';
 
-const MOCK_USER: UserCharacter = {
-  level: 1,
-  exp: 450,
-  nextLevelExp: 1000,
-  gold: 2500,
-  stats: {
-    health: 150,
-    attack: 20,
-    defense: 12,
-  },
-};
-
 // 레벨별 캐릭터 이미지
-const characterImages: Record<CharacterImageType, any> = {
-  beginner: require('@/assets/images/characters/class1.png'), // 레벨 1-3
-  intermediate: require('@/assets/images/characters/class1.png'), // 레벨 4-7
-  advanced: require('@/assets/images/characters/class1.png'), // 레벨 8-10
-  expert: require('@/assets/images/characters/class1.png'), // 레벨 11+
-};
-
-type levelProps = {
-  level: number;
-  exp: number;
-  nextLevelExp: number;
-  gold: number;
-  remaining_exp: number;
-  character_name: string;
-};
-
-// 업적 타입 정의 (Achievement.tsx와 동일하게)
-type AchievementProps = {
-  achievement_id: number | null;
-  title: string | null;
-  description: string | null;
-  is_unlocked: boolean;
-  unlocked_at: string | null;
-  icon: null;
-  unlocked_user_count: number;
+const characterImages: Record<CharacterImageType, ImageSourcePropType> = {
+  level1: require('@/assets/images/characters/tree0.png'), // 레벨 1-3
+  level2: require('@/assets/images/characters/tree1.png'), // 레벨 4-10
+  level3: require('@/assets/images/characters/tree2.png'), // 레벨 10-15
+  level4: require('@/assets/images/characters/tree3.png'), // 레벨 16-20
+  level5: require('@/assets/images/characters/tree4.png'), // 레벨 21-30
+  level6: require('@/assets/images/characters/tree5.png'), // 레벨 31-40
+  level7: require('@/assets/images/characters/tree6.png'), // 레벨 41-50
+  level8: require('@/assets/images/characters/tree7.png'), // 레벨 51-60+
 };
 
 export default function CharacterScreen() {
   const isFocused = useIsFocused();
-  const [characterInfo, setCharacterInfo] = useState<levelProps | null>(null);
+  const [characterInfo, setCharacterInfo] = useState<LevelProps | null>(null);
   const [achievements, setAchievements] = useState<AchievementProps[]>([]);
 
   useEffect(() => {
@@ -86,22 +48,27 @@ export default function CharacterScreen() {
 
   // 레벨에 따라 캐릭터 이미지 결정
   const getCharacterImage = (): any => {
-    const level = MOCK_USER.level;
+    const level = characterInfo?.level ?? 1;
+    if (level >= 1 && level <= 3) return characterImages.level1;
+    if (level >= 4 && level <= 10) return characterImages.level2;
+    if (level >= 11 && level <= 15) return characterImages.level3;
+    if (level >= 16 && level <= 20) return characterImages.level4;
+    if (level >= 21 && level <= 30) return characterImages.level5;
+    if (level >= 31 && level <= 40) return characterImages.level6;
+    if (level >= 41 && level <= 50) return characterImages.level7;
+    if (level >= 51) return characterImages.level8;
 
-    if (level >= 11) return characterImages.expert;
-    if (level >= 8) return characterImages.advanced;
-    if (level >= 4) return characterImages.intermediate;
-    return characterImages.beginner;
+    return characterImages.level1;
   };
 
   return (
     <SafeAreaView style={[{ paddingTop: Platform.OS === 'android' ? 50 : 0 }, styles.container]}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>✨ 캐릭터 ✨</Text>
+          <Text style={styles.title}>캐릭터</Text>
         </View>
         {/* 캐릭터 카드 영역 */}
-        <View style={[styles.msCharacterCard, { backgroundColor: '#fff' }]}>
+        <View style={styles.msCharacterCard}>
           <View style={styles.msAvatarWrapper}>
             <View style={styles.msAvatarCircle}>
               <Image source={getCharacterImage()} style={styles.msAvatarImage} resizeMode='cover' />
@@ -109,7 +76,7 @@ export default function CharacterScreen() {
           </View>
           {/* 닉네임 */}
           <Text numberOfLines={1} style={styles.msNickname}>
-            {characterInfo?.character_name}
+            {characterInfo?.character_name ?? '모험가'}
           </Text>
           {/* 레벨 */}
           <View style={styles.msBadgesRow}>
@@ -232,6 +199,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   msCharacterCard: {
+    backgroundColor: QuestineColors.WHITE,
     borderRadius: 30,
     padding: 30,
     marginBottom: 25,
