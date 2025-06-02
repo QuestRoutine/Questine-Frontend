@@ -1,21 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, SafeAreaView, Platform, ImageSourcePropType } from 'react-native';
-import { AchievementProps, CharacterImageType, LevelProps } from '@/types/character';
+import { View, Text, StyleSheet, Image, ScrollView, SafeAreaView, Platform } from 'react-native';
+import { AchievementProps, LevelProps } from '@/types/user';
 import { QuestineColors } from '@/constants/Colors';
 import axiosInstance from '@/api/axios';
 import { useIsFocused } from '@react-navigation/native';
-
-// 레벨별 캐릭터 이미지
-const characterImages: Record<CharacterImageType, ImageSourcePropType> = {
-  level1: require('@/assets/images/characters/tree0.png'), // 레벨 1-3
-  level2: require('@/assets/images/characters/tree1.png'), // 레벨 4-10
-  level3: require('@/assets/images/characters/tree2.png'), // 레벨 10-15
-  level4: require('@/assets/images/characters/tree3.png'), // 레벨 16-20
-  level5: require('@/assets/images/characters/tree4.png'), // 레벨 21-30
-  level6: require('@/assets/images/characters/tree5.png'), // 레벨 31-40
-  level7: require('@/assets/images/characters/tree6.png'), // 레벨 41-50
-  level8: require('@/assets/images/characters/tree7.png'), // 레벨 51-60+
-};
 
 export default function CharacterScreen() {
   const isFocused = useIsFocused();
@@ -34,7 +22,6 @@ export default function CharacterScreen() {
     fetchData();
   }, [isFocused]);
 
-  // 업적 데이터 fetch
   useEffect(() => {
     if (!isFocused) return;
     const fetchAchievements = async () => {
@@ -45,22 +32,6 @@ export default function CharacterScreen() {
     };
     fetchAchievements();
   }, [isFocused]);
-
-  // 레벨에 따라 캐릭터 이미지 결정
-  const getCharacterImage = (): any => {
-    const level = characterInfo?.level ?? 1;
-    if (level >= 1 && level <= 3) return characterImages.level1;
-    if (level >= 4 && level <= 10) return characterImages.level2;
-    if (level >= 11 && level <= 15) return characterImages.level3;
-    if (level >= 16 && level <= 20) return characterImages.level4;
-    if (level >= 21 && level <= 30) return characterImages.level5;
-    if (level >= 31 && level <= 40) return characterImages.level6;
-    if (level >= 41 && level <= 50) return characterImages.level7;
-    if (level >= 51) return characterImages.level8;
-
-    return characterImages.level1;
-  };
-
   return (
     <SafeAreaView style={[{ paddingTop: Platform.OS === 'android' ? 50 : 0 }, styles.container]}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -71,7 +42,15 @@ export default function CharacterScreen() {
         <View style={styles.msCharacterCard}>
           <View style={styles.msAvatarWrapper}>
             <View style={styles.msAvatarCircle}>
-              <Image source={getCharacterImage()} style={styles.msAvatarImage} resizeMode='cover' />
+              <Image
+                source={
+                  characterInfo?.image_url
+                    ? { uri: `${process.env.EXPO_PUBLIC_SERVER_URL}${characterInfo.image_url}` }
+                    : require('@/assets/images/characters/tree0.png')
+                }
+                style={styles.msAvatarImage}
+                resizeMode='cover'
+              />
             </View>
           </View>
           {/* 닉네임 */}

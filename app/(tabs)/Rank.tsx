@@ -2,85 +2,19 @@ import axiosInstance from '@/api/axios';
 import { getMe } from '@/api/auth';
 import { useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, SafeAreaView, TouchableOpacity, Image, Platform } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, SafeAreaView, Image, Platform } from 'react-native';
+import { RankingUser } from '@/types/user';
+import { QuestineColors } from '@/constants/Colors';
 
-interface RankingUser {
-  userId: number;
-  nickname: string;
-  level: number;
-  exp: number;
-  avatar?: any;
-}
-
-const MOCK_RANKING: RankingUser[] = [
-  {
-    userId: 1,
-    nickname: '마법사짱',
-    level: 12,
-    exp: 3200,
-    avatar: require('@/assets/images/characters/class1.png'),
-  },
-  {
-    userId: 2,
-    nickname: '용감한기사',
-    level: 10,
-    exp: 2500,
-    avatar: require('@/assets/images/characters/class1.png'),
-  },
-  {
-    userId: 3,
-    nickname: '치유의요정',
-    level: 8,
-    exp: 1800,
-    avatar: require('@/assets/images/characters/class1.png'),
-  },
-  {
-    userId: 4,
-    nickname: '초보모험가',
-    level: 5,
-    exp: 900,
-    avatar: require('@/assets/images/characters/class1.png'),
-  },
-  {
-    userId: 5,
-    nickname: '초보모험가',
-    level: 5,
-    exp: 900,
-    avatar: require('@/assets/images/characters/class1.png'),
-  },
-  {
-    userId: 6,
-    nickname: '초보모험가',
-    level: 5,
-    exp: 900,
-    avatar: require('@/assets/images/characters/class1.png'),
-  },
-  {
-    userId: 7,
-    nickname: '초보모험가',
-    level: 5,
-    exp: 900,
-    avatar: require('@/assets/images/characters/class1.png'),
-  },
-  { userId: 8, nickname: '나', level: 3, exp: 700, avatar: require('@/assets/images/characters/class1.png') },
-];
-
-const RANK_FILTERS = [
-  { key: 'all', label: '전체' },
-  { key: 'weekly', label: '주간' },
-  { key: 'montly', label: '월간' },
-  { key: 'yearly', label: '연간' },
-  { key: 'friends', label: '친구' },
-];
+const RANK_FILTERS = [{ key: 'all', label: '전체' }];
 
 export default function Rank() {
-  const [ranking, setRanking] = useState<RankingUser[]>(MOCK_RANKING);
+  const [ranking, setRanking] = useState<RankingUser[]>([]);
   const [filter, setFilter] = useState('all');
   const [myInfo, setMyInfo] = useState<RankingUser | null>(null);
   const [myRank, setMyRank] = useState<number | null>(null);
 
   const isFocused = useIsFocused();
-
   useEffect(() => {
     if (!isFocused) return;
     const fetchData = async () => {
@@ -92,7 +26,9 @@ export default function Rank() {
         nickname: item.nickname,
         level: item.level,
         exp: item.total_exp,
-        avatar: require('@/assets/images/characters/class1.png'),
+        image_url: item.image_url
+          ? { uri: `${process.env.EXPO_PUBLIC_SERVER_URL}${item.image_url}` }
+          : require('@/assets/images/characters/tree0.png'),
       }));
       setRanking(mapped);
       const my = mapped.find((user: RankingUser) => user.nickname === myNickname);
@@ -114,7 +50,7 @@ export default function Rank() {
     >
       <SafeAreaView>
         {/* 랭킹 필터 탭 */}
-        <View style={styles.filterBar}>
+        {/* <View style={styles.filterBar}>
           {RANK_FILTERS.map((f) => (
             <TouchableOpacity
               key={f.key}
@@ -126,12 +62,15 @@ export default function Rank() {
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </View> */}
         {/* 내 정보 카드 */}
         {myInfo && myRank && (
           <View style={styles.myInfoCard}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Image source={myInfo.avatar} style={styles.myAvatar} />
+              <Image
+                source={myInfo.image_url ?? require('@/assets/images/characters/tree0.png')}
+                style={styles.myAvatar}
+              />
               <View style={{ marginLeft: 12 }}>
                 <Text style={styles.myInfoName} numberOfLines={2}>
                   {myInfo.nickname} (내 순위: {myRank}위)
@@ -141,17 +80,10 @@ export default function Rank() {
                 </Text>
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.myInfoButton}
-              onPress={() => {
-                /* 내 정보로 이동 구현 필요 */
-              }}
-            >
-              <Text style={styles.myInfoButtonText}>내 정보로 이동</Text>
-            </TouchableOpacity>
           </View>
         )}
-        <Text style={styles.title}>🏆 전체 캐릭터 랭킹</Text>
+        <Text style={styles.title}>🏆 전체 랭킹</Text>
+        <Text style={styles.desc}>가장 활동적인 사용자들의 랭킹을 확인해보세요!</Text>
         <View style={styles.rankingBox}>
           {ranking.map((user, idx) => (
             <View
@@ -171,7 +103,10 @@ export default function Rank() {
                 )}
               </View>
               {/* 캐릭터 아바타 */}
-              <Image source={user.avatar} style={styles.avatarCircle} />
+              <Image
+                source={user.image_url ?? require('@/assets/images/characters/tree0.png')}
+                style={styles.avatarCircle}
+              />
               <View style={{ flex: 1 }}>
                 <Text style={styles.nickname} numberOfLines={1}>
                   {user.nickname}
@@ -214,6 +149,12 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     color: '#667eea',
     alignSelf: 'center',
+  },
+  desc: {
+    fontSize: 15,
+    color: QuestineColors.GRAY_500,
+    marginBottom: 24,
+    textAlign: 'center',
   },
   rankingBox: {
     backgroundColor: '#fff',
