@@ -7,20 +7,7 @@ import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 import { loadTodosStorage, saveTodosStorage } from './useTodoStorage';
-
-interface AddTodoParams {
-  content: string;
-  due_at: string;
-}
-
-interface Todo {
-  todo_id: number;
-  content: string;
-  completed: boolean;
-  created_at: string;
-  exp_reward: number;
-  due_at: string;
-}
+import { AddTodoParams, Todo } from '@/types/todo';
 
 const getTodosQueryKey = (year: number, month: number) => ['todos', year, month] as const;
 export const DATE_FORMAT = 'YYYY-MM-DD';

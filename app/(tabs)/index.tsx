@@ -23,19 +23,9 @@ import TodoList from '../../components/TodoList';
 import { SingleDotDay, MultiDotDay, EmptyDay } from '../../components/CalendarDayCells';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { QuestineColors } from '@/constants/Colors';
-import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
-type MarkedDates = {
-  [date: string]: {
-    selected?: boolean;
-    marked?: boolean;
-    selectedColor?: string;
-    dots?: Array<{ color: string }>;
-    completedCount?: number;
-    incompletedCount?: number;
-    todoCount?: number;
-  };
-};
+import { Todo } from '@/types/todo';
+import { MarkedDates } from '@/types/calendar';
 
 const COLORS = ['#fda4af', '#fdba74', '#fef08a', '#bef264', '#7dd3fc', '#c4b5fd', '#f0abfc'];
 
@@ -45,16 +35,6 @@ const DAY_TEXT_FONT_SIZE = 14;
 const DAY_SELECTED_RADIUS = 16;
 const TODO_INDICATOR_SIZE = 20;
 const TODO_INDICATOR_RADIUS = 5;
-
-interface Todo {
-  todo_id: number;
-  content: string;
-  completed: boolean;
-  created_at: string;
-  exp_reward: number;
-  exp_shown?: boolean; // exp 토스트 메시지 표시 여부
-  due_at: string;
-}
 
 export default function HomeScreen() {
   const isFocused = useIsFocused();

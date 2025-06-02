@@ -5,16 +5,7 @@ import axiosInstance from '@/api/axios';
 import { useIsFocused } from '@react-navigation/native';
 import Modal from 'react-native-modal';
 import { X } from 'lucide-react-native';
-
-type AchievementProps = {
-  achievement_id: number | null;
-  title: string | null;
-  description: string | null;
-  is_unlocked: boolean;
-  unlocked_at: string | null;
-  icon: null;
-  unlocked_user_count: number;
-};
+import { AchievementProps } from '@/types/user';
 
 export default function Award() {
   const colors = Colors['light'];

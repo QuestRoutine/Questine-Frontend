@@ -2,16 +2,7 @@ import React from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Check } from 'lucide-react-native';
-import { DateData } from 'react-native-calendars';
-
-export interface SingleDotDayProps {
-  date: DateData;
-  state: string;
-  isSelected: boolean;
-  dotColor: string;
-  incompleteTodoCount: number;
-  onDayPress: (date: DateData) => void;
-}
+import { EmptyDayProps, MultiDotDayProps, SingleDotDayProps } from '@/types/calendar';
 
 export function SingleDotDay({
   date,
@@ -45,14 +36,6 @@ export function SingleDotDay({
   );
 }
 
-export interface MultiDotDayProps {
-  date: DateData;
-  state: string;
-  isSelected: boolean;
-  dots: { color: string }[];
-  incompleteTodoCount: number;
-  onDayPress: (date: DateData) => void;
-}
 export function MultiDotDay({ date, state, isSelected, dots, incompleteTodoCount, onDayPress }: MultiDotDayProps) {
   const gradColors = dots.length === 1 ? [dots[0].color, dots[0].color] : dots.slice(0, 7).map((dot) => dot.color);
   const gradLocations =
@@ -88,13 +71,6 @@ export function MultiDotDay({ date, state, isSelected, dots, incompleteTodoCount
   );
 }
 
-export interface EmptyDayProps {
-  date: DateData;
-  state: string;
-  isSelected: boolean;
-  todoCount: number;
-  onDayPress: (date: DateData) => void;
-}
 export function EmptyDay({ date, state, isSelected, todoCount, onDayPress }: EmptyDayProps) {
   return (
     <Pressable style={styles.dayContainer} onPress={() => onDayPress(date)}>

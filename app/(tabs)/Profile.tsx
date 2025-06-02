@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axios';
 import { useIsFocused } from '@react-navigation/native';
 import CustomInput from '@/components/CustomInput';
+import { UserInfo } from '@/types/user';
 
 // 임시 통계 데이터
 const STATISTICS = {
@@ -24,30 +25,6 @@ const STATISTICS = {
   mostProductiveTime: '오전 9시',
   longestStreak: 5, // 최장 연속 완료일
   totalCompletedTasks: 15,
-};
-
-type UserInfo = {
-  profile_id: number;
-  user_id: number;
-  nickname: string;
-  avatar_url: string | null;
-  join_date: string;
-  total_completed_tasks: number;
-  current_streak: number;
-  longest_streak: number;
-  weekly_avg_completion: number;
-  most_productive_day: string | null;
-  most_productive_time: string | null;
-  created_at: string;
-  updated_at: string;
-  statistics: {
-    totalCompletedTasks: number;
-    current_streak: number;
-    longest_streak: number;
-    weekly_avg_completion: number;
-    most_productive_day: string | null;
-    most_productive_time: string | null;
-  };
 };
 
 export default function Profile() {

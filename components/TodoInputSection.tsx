@@ -1,10 +1,6 @@
+import { TodoInputSectionProps } from '@/types/todo';
 import React, { memo, useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Keyboard } from 'react-native';
-
-export interface TodoInputSectionProps {
-  addTodo: (todo: string) => void;
-  isLoading: boolean;
-}
 
 const TodoInputSection = memo(function TodoInputSection({ addTodo, isLoading }: TodoInputSectionProps) {
   const [inputValue, setInputValue] = useState('');

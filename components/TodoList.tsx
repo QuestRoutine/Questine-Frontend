@@ -1,22 +1,7 @@
 import { QuestineColors } from '@/constants/Colors';
+import { TodoListProps } from '@/types/todo';
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-
-interface Todo {
-  todo_id: number;
-  content: string;
-  completed: boolean;
-  created_at: string;
-  exp_reward: number;
-  exp_shown?: boolean;
-  due_at: string;
-}
-
-interface TodoListProps {
-  filteredTodos: Todo[];
-  handleToggleTodo: (todo: Todo) => void;
-  deleteTodo: (id: number) => void;
-}
 
 const TodoList = memo(function TodoList({ filteredTodos, handleToggleTodo, deleteTodo }: TodoListProps) {
   return (
