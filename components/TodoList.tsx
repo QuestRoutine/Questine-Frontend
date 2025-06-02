@@ -1,3 +1,4 @@
+import { QuestineColors } from '@/constants/Colors';
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
@@ -24,6 +25,7 @@ const TodoList = memo(function TodoList({ filteredTodos, handleToggleTodo, delet
         filteredTodos.map((todo) => (
           <View key={todo.todo_id} style={styles.todoItem}>
             <TouchableOpacity
+              activeOpacity={0.7}
               style={[styles.checkbox, todo.completed && styles.checkboxChecked]}
               onPress={() => handleToggleTodo(todo)}
             >
@@ -55,12 +57,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    // paddingLeft: 8,
+    // borderWidth: 1,
+    borderBottomColor: QuestineColors.GRAY_200,
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 6,
     borderWidth: 2,
     borderColor: '#ddd',
     marginRight: 10,
@@ -68,8 +72,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#B5EAD7',
-    borderColor: '#B5EAD7',
+    backgroundColor: QuestineColors.PINK_300,
+    borderColor: QuestineColors.PINK_300,
   },
   checkmark: {
     color: 'white',
