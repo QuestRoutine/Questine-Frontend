@@ -43,7 +43,7 @@
 
 # 🧩 서비스 주요 기능
 
-<div align="center>
+<div align="center">
 
 ### 할 일 등록/삭제
 
