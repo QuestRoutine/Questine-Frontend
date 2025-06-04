@@ -155,7 +155,7 @@ export default function Profile() {
               <Text style={[styles.statLabel, { color: colors.icon }]}>주간 완료율</Text>
             </View>
           </View>
-          <View style={styles.additionalStats}>
+          {/* <View style={styles.additionalStats}>
             <View style={styles.statRow}>
               <Text style={[styles.statRowLabel, { color: colors.icon }]}>가장 생산적인 요일:</Text>
               <Text style={[styles.statRowValue, { color: colors.text }]}>{STATISTICS.mostProductiveDay}</Text>
@@ -164,7 +164,7 @@ export default function Profile() {
               <Text style={[styles.statRowLabel, { color: colors.icon }]}>가장 생산적인 시간:</Text>
               <Text style={[styles.statRowValue, { color: colors.text }]}>{STATISTICS.mostProductiveTime}</Text>
             </View>
-          </View>
+          </View> */}
         </View>
       </ScrollView>
       {/* 닉네임 변경 모달 */}

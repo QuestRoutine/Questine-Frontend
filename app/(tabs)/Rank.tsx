@@ -72,11 +72,11 @@ export default function Rank() {
                 style={styles.myAvatar}
               />
               <View style={{ marginLeft: 12 }}>
-                <Text style={styles.myInfoName} numberOfLines={2}>
-                  {myInfo.nickname} (내 순위: {myRank}위)
+                <Text style={styles.myInfoName} numberOfLines={1}>
+                  {myInfo.nickname}
                 </Text>
                 <Text style={styles.myInfoLevel}>
-                  Lv.{myInfo.level} | {myInfo.exp} EXP
+                  내 순위: {myRank}위 | Lv.{myInfo.level} | {myInfo.exp} EXP
                 </Text>
               </View>
             </View>
@@ -208,6 +208,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffe066',
     borderRadius: 8,
     paddingHorizontal: 8,
+    marginRight: 8,
     paddingVertical: 2,
   },
   meBadgeText: {
@@ -264,6 +265,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#b19700',
     marginBottom: 2,
+    maxWidth: 250,
   },
   myInfoLevel: {
     fontSize: 13,
