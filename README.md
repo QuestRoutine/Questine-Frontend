@@ -39,16 +39,18 @@
 
 ## ERD
 
-<img max-width="1200" alt="Image" src="https://github.com/user-attachments/assets/0030ad9d-8fad-42b5-b124-19570d79bb5b" />
+<img width="1200" alt="Image" src="https://github.com/user-attachments/assets/0030ad9d-8fad-42b5-b124-19570d79bb5b" />
 
 # 🧩 서비스 주요 기능
+
+<div align="center>
 
 ### 할 일 등록/삭제
 
 <table>
   <tr>
     <td max-width="500">
-      <img src="https://github.com/user-attachments/assets/2cfdc55e-00d2-441a-a022-56834104b1df" />
+      <img width="300" src="https://github.com/user-attachments/assets/2cfdc55e-00d2-441a-a022-56834104b1df" />
     </td>
     <td>
       <b>할 일</b> - 할 일 추가 및 삭제를 할 수 있습니다. <br/>
@@ -61,9 +63,10 @@
 <table>
   <tr>
     <td max-width="500">
-      <img src="https://github.com/user-attachments/assets/e04c055c-58cb-4633-bb2d-dd7153983673" />
+      <img width="300" src="https://github.com/user-attachments/assets/e04c055c-58cb-4633-bb2d-dd7153983673" />
     </td>
     <td>
+      <b>할 일</b> - 할 일 추가 및 삭제를 할 수 있습니다. <br/>
     </td>
   </tr>
 </table>
@@ -73,21 +76,24 @@
 <table>
   <tr>
     <td max-width="500">
-      <img src="https://github.com/user-attachments/assets/f8e2692d-7b39-40d1-8326-522891509d76" />
+      <img width="300" src="https://github.com/user-attachments/assets/f8e2692d-7b39-40d1-8326-522891509d76" />
     </td>
     <td>
+      <b>할 일</b> - 할 일 추가 및 삭제를 할 수 있습니다. <br/>
     </td>
   </tr>
 </table>
 <table>
   <tr>
     <td max-width="500">
-      <img src="https://github.com/user-attachments/assets/d2ffe967-b448-4ab7-babd-bed4b6038c1b" />
+      <img width="300" src="https://github.com/user-attachments/assets/d2ffe967-b448-4ab7-babd-bed4b6038c1b" />
     </td>
     <td>
+      <b>할 일</b> - 할 일 추가 및 삭제를 할 수 있습니다. <br/>
     </td>
   </tr>
 </table>
+</div>
 
 <br/>
 
