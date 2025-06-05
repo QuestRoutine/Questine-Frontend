@@ -4,7 +4,6 @@ import { QuestineColors } from '@/constants/Colors';
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
-import { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 import { loadTodosStorage, saveTodosStorage } from './useTodoStorage';
 import { AddTodoParams, Todo } from '@/types/todo';
@@ -113,15 +112,6 @@ export function useTodos(year?: number, month?: number): UseQueryResult<Todo[], 
     refetchOnReconnect: true,
     initialData: [],
   });
-  useEffect(() => {
-    if (data.error) {
-      Toast.show({
-        type: 'error',
-        text1: '오류',
-        text2: '할 일을 불러오는 데 실패했습니다.',
-      });
-    }
-  }, [data.error]);
   return data;
 }
 
