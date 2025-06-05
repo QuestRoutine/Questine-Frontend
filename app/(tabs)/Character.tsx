@@ -4,6 +4,7 @@ import { AchievementProps, LevelProps } from '@/types/user';
 import { QuestineColors } from '@/constants/Colors';
 import axiosInstance from '@/api/axios';
 import { useIsFocused } from '@react-navigation/native';
+import { getServerUrl } from '@/utils/env';
 
 export default function CharacterScreen() {
   const isFocused = useIsFocused();
@@ -45,7 +46,9 @@ export default function CharacterScreen() {
               <Image
                 source={
                   characterInfo?.image_url
-                    ? { uri: `${process.env.EXPO_PUBLIC_SERVER_URL}${characterInfo.image_url}` }
+                    ? {
+                        uri: `${getServerUrl()}${characterInfo.image_url}`,
+                      }
                     : require('@/assets/images/characters/tree0.png')
                 }
                 style={styles.msAvatarImage}

@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, SafeAreaView, Image, Platform } from 'react-native';
 import { RankingUser } from '@/types/user';
 import { QuestineColors } from '@/constants/Colors';
+import { getServerUrl } from '@/utils/env';
 
 const RANK_FILTERS = [{ key: 'all', label: '전체' }];
 
@@ -27,7 +28,9 @@ export default function Rank() {
         level: item.level,
         exp: item.total_exp,
         image_url: item.image_url
-          ? { uri: `${process.env.EXPO_PUBLIC_SERVER_URL}${item.image_url}` }
+          ? {
+              uri: `${getServerUrl()}${item.image_url}`,
+            }
           : require('@/assets/images/characters/tree0.png'),
       }));
       setRanking(mapped);
