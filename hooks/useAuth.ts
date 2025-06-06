@@ -1,4 +1,4 @@
-import { getAccessToken, getMe, postLogout, postSignin, postSignup } from '@/api/auth';
+import { deleteAccount, getAccessToken, getMe, postLogout, postSignin, postSignup } from '@/api/auth';
 import queryClient from '@/api/queryClient';
 import { removeHeader, setHeader } from '@/utils/header';
 import { deleteSecureStore, setSecureStore } from '@/utils/secureStore';
@@ -114,12 +114,39 @@ function useRefreshToken() {
   return { isSuccess, isError };
 }
 
+function useDeleteAccount() {
+  return useMutation({
+    mutationFn: deleteAccount,
+    onSuccess: () => {
+      AsyncStorage.clear();
+      queryClient.clear();
+      removeHeader('Authorization');
+      deleteSecureStore('accessToken');
+      deleteSecureStore('refreshToken');
+      router.replace('/auth/Login');
+      Toast.show({
+        type: 'success',
+        text1: '계정 삭제 성공',
+        text2: '계정이 성공적으로 삭제되었습니다.',
+      });
+    },
+    onError: (error) => {
+      Toast.show({
+        type: 'error',
+        text1: '계정 삭제 실패',
+        text2: '다시 시도해주세요.',
+      });
+    },
+  });
+}
+
 function useAuth() {
   const { data: auth } = useGetMe();
   const signupMutation = useSignup();
   const signinMutation = useSignin();
   const refreshTokenQuery = useRefreshToken();
   const logoutMutation = useLogout();
+  const deleteAccountMutation = useDeleteAccount();
 
   return {
     auth: {
@@ -129,6 +156,7 @@ function useAuth() {
     signinMutation,
     refreshTokenQuery,
     logoutMutation,
+    deleteAccountMutation,
   };
 }
 

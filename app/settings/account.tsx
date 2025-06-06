@@ -1,20 +1,23 @@
 import React from 'react';
 import { Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors, QuestineColors } from '@/constants/Colors';
+import useAuth from '@/hooks/useAuth';
 
 export default function AccountSettings() {
   const colors = Colors['light'];
+  const { deleteAccountMutation } = useAuth();
+  const handleDeleteAccount = () => {
+    deleteAccountMutation.mutateAsync();
+  };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
       <SafeAreaView style={styles.container}>
         {/* 계정 관리 섹션 */}
-        <TouchableOpacity
-          style={[styles.deleteAccount, { borderColor: colors.icon + '30' }]}
-          onPress={() => console.log('계정 삭제')}
-        >
-          <Text style={styles.deleteAccountText}>계정 탈퇴</Text>
+        <TouchableOpacity style={[styles.deleteAccount, { borderColor: colors.icon + '30' }]}>
+          <Text style={styles.deleteAccountText} onPress={handleDeleteAccount}>
+            계정 탈퇴
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     </ScrollView>

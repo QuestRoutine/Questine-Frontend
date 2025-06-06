@@ -28,4 +28,9 @@ async function getAccessToken() {
   return data;
 }
 
-export { postSignup, postSignin, getMe, getAccessToken, postLogout };
+async function deleteAccount(): Promise<void> {
+  const { data } = await axiosInstance.delete('/auth/me');
+  return data;
+}
+
+export { postSignup, postSignin, getMe, getAccessToken, postLogout, deleteAccount };
