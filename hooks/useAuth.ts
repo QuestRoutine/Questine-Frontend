@@ -1,7 +1,7 @@
 import { deleteAccount, getAccessToken, getMe, postLogout, postSignin, postSignup } from '@/api/auth';
 import queryClient from '@/api/queryClient';
 import { removeHeader, setHeader } from '@/utils/header';
-import { deleteSecureStore, setSecureStore } from '@/utils/secureStore';
+import { deleteSecureStore, getSecureStore, setSecureStore } from '@/utils/secureStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -9,12 +9,22 @@ import { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 
 function useGetMe() {
-  const { data, isError } = useQuery({
+  const { data, isError, isSuccess, isLoading } = useQuery({
     queryFn: getMe,
     queryKey: ['getMe'],
     staleTime: 1000 * 60 * 60, // 1 hour
     refetchInterval: 1000 * 60 * 60, // 1 hour
   });
+
+  useEffect(() => {
+    (async () => {
+      if (isSuccess) {
+        const accessToken = await getSecureStore('accessToken');
+        setHeader('Authorization', `Bearer ${accessToken}`);
+      }
+    })();
+  }, [isSuccess]);
+
   useEffect(() => {
     if (isError) {
       removeHeader('Authorization');
@@ -22,7 +32,7 @@ function useGetMe() {
     }
   }, [isError]);
 
-  return { data };
+  return { data, isLoading };
 }
 
 function useSignup() {
@@ -48,7 +58,6 @@ function useSignin() {
       setHeader('Authorization', `Bearer ${accessToken}`);
       await setSecureStore('accessToken', accessToken);
       await setSecureStore('refreshToken', refreshToken);
-
       await queryClient.fetchQuery({ queryKey: ['getMe'], queryFn: getMe });
       router.replace('/(tabs)');
     },
@@ -141,7 +150,7 @@ function useDeleteAccount() {
 }
 
 function useAuth() {
-  const { data: auth } = useGetMe();
+  const { data: auth, isLoading: isAuthLoading } = useGetMe();
   const signupMutation = useSignup();
   const signinMutation = useSignin();
   const refreshTokenQuery = useRefreshToken();
@@ -152,6 +161,7 @@ function useAuth() {
     auth: {
       user_id: auth?.user_id || '',
     },
+    isAuthLoading,
     signupMutation,
     signinMutation,
     refreshTokenQuery,
