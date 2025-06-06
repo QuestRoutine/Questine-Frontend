@@ -16,7 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.elcynia.questine"
+      "package": "com.j0n9hyun.QuestineFrontend"
     },
     "web": {
       "bundler": "metro",
