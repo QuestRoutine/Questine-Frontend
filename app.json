@@ -15,7 +15,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.elcynia.questine"
     },
     "web": {
       "bundler": "metro",
@@ -33,14 +34,32 @@
           "backgroundColor": "#ffffff"
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "usesCleartextTraffic": true
+          },
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ],
       "expo-font",
       "expo-web-browser",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "sdkVersion": "53.0.0",
-    "entryPoint": ".vscode/exponentIndex.js"
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8e2c9e94-951a-4abc-813b-49bacf10569d"
+      }
+    }
   }
 }
