@@ -18,15 +18,6 @@ import { useIsFocused } from '@react-navigation/native';
 import CustomInput from '@/components/CustomInput';
 import { UserInfo } from '@/types/user';
 
-// 임시 통계 데이터
-const STATISTICS = {
-  weeklyAvgCompletion: 85, // 주간 평균 완료율(%)
-  mostProductiveDay: '월요일',
-  mostProductiveTime: '오전 9시',
-  longestStreak: 5, // 최장 연속 완료일
-  totalCompletedTasks: 15,
-};
-
 export default function Profile() {
   const colors = Colors['light'];
   const isFocused = useIsFocused();
@@ -151,7 +142,7 @@ export default function Profile() {
               <Text style={[styles.statLabel, { color: colors.icon }]}>최장 연속일</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{userInfo?.longest_streak}</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{userInfo?.statistics.achievementsCount}</Text>
               <Text style={[styles.statLabel, { color: colors.icon }]}>획득한 업적</Text>
             </View>
 

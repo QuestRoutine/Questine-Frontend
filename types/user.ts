@@ -4,23 +4,17 @@ export type UserInfo = {
   profile_id: number;
   user_id: number;
   nickname: string;
-  avatar_url: string | null;
   join_date: string;
   total_completed_tasks: number;
   current_streak: number;
   longest_streak: number;
-  weekly_avg_completion: number;
-  most_productive_day: string | null;
-  most_productive_time: string | null;
   created_at: string;
   updated_at: string;
   statistics: {
     totalCompletedTasks: number;
     current_streak: number;
     longest_streak: number;
-    weekly_avg_completion: number;
-    most_productive_day: string | null;
-    most_productive_time: string | null;
+    achievementsCount: number;
   };
 };
 
