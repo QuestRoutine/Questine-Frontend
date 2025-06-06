@@ -36,22 +36,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return null;
   }
 
+  const toastConfig = {
+    custom: (props: CustomToastProps) => <CustomToast {...props} />,
+    customSuccess: (props: CustomToastProps) => <CustomToast {...props} />,
+    error: (props: CustomToastProps) => <CustomToast {...props} />,
+    info: (props: CustomToastProps) => <CustomToast {...props} />,
+    warning: (props: CustomToastProps) => <CustomToast {...props} />,
+  };
   return (
-    <QueryClientProvider client={queryClient}>
-      <RootNavigator />
-    </QueryClientProvider>
-  );
-
-  function RootNavigator() {
-    const toastConfig = {
-      custom: (props: CustomToastProps) => <CustomToast {...props} />,
-      customSuccess: (props: CustomToastProps) => <CustomToast {...props} />,
-      error: (props: CustomToastProps) => <CustomToast {...props} />,
-      info: (props: CustomToastProps) => <CustomToast {...props} />,
-      warning: (props: CustomToastProps) => <CustomToast {...props} />,
-    };
-    return (
-      <>
+    <>
+      <QueryClientProvider client={queryClient}>
         <Stack>
           <Stack.Screen name='(tabs)' options={{ headerShown: false, title: '홈' }} />
           <Stack.Screen name='auth' options={{ headerShown: false, title: '로그인' }} />
@@ -60,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Stack>
         <Toast config={toastConfig} />
         <StatusBar style='dark' backgroundColor='transparent' />
-      </>
-    );
-  }
+      </QueryClientProvider>
+    </>
+  );
 }
