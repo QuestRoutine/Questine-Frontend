@@ -49,7 +49,7 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name='(tabs)' options={{ headerShown: false, title: '홈' }} />
           <Stack.Screen name='auth' options={{ headerShown: false, title: '로그인' }} />
-          <Stack.Screen name='settings' options={{ headerShown: true, title: '설정' }} />
+          <Stack.Screen name='settings' options={{ headerShown: false, title: '설정' }} />
           <Stack.Screen name='+not-found' />
         </Stack>
         <Toast config={toastConfig} />

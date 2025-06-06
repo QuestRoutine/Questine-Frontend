@@ -1,7 +1,7 @@
-import React from 'react';
+import { QuestineColors } from '@/constants/Colors';
 import { Stack } from 'expo-router';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
+import { ChevronLeft, StepBack } from 'lucide-react-native';
+import { Text, View } from 'react-native';
 
 export default function SettingsLayout() {
   return (
@@ -10,14 +10,15 @@ export default function SettingsLayout() {
         name='index'
         options={{
           title: '설정',
-          headerShown: false,
+          headerShown: true,
+          headerTitleAlign: 'center',
         }}
       />
       <Stack.Screen
         name='account'
         options={{
           title: '계정 설정',
-          headerShown: false,
+          headerShown: true,
         }}
       />
     </Stack>
