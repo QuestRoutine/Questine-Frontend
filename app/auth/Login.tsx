@@ -34,7 +34,7 @@ export default function Login() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.logoContainer}>
-            <Image source={require('../../assets/images/Questine.png')} style={styles.logo} resizeMode='contain' />
+            <Image source={require('../../assets/images/Questine2.png')} style={styles.logo} resizeMode='contain' />
           </View>
 
           <View style={styles.formContainer}>
@@ -44,7 +44,6 @@ export default function Login() {
             {/* {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null} */}
 
             <CustomButton label='로그인' onPress={signinForm.handleSubmit(onSubmit)} />
-            <CustomButton label='카카오로 로그인' loginType='kakao' onPress={signinForm.handleSubmit(onSubmit)} />
 
             <View style={styles.registerLinkContainer}>
               <Text style={styles.registerText}>아직 계정이 없으신가요?</Text>
@@ -74,7 +73,7 @@ const styles = StyleSheet.create({
     marginBottom: 50,
   },
   logo: {
-    width: 250,
+    width: 200,
     height: 100,
   },
   formContainer: {

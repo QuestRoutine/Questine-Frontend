@@ -12,11 +12,6 @@ export default function AuthLayout() {
         name='Login'
         options={{
           title: '로그인',
-          headerLeft: () => (
-            <Link href='/' replace style={{ marginLeft: 10 }}>
-              <Foundation name='home' size={28} color={'hotpink'} />
-            </Link>
-          ),
         }}
       />
       <Stack.Screen
