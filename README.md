@@ -14,7 +14,7 @@
 
 > 목차
 >
-> - [⚙️ 기술 스택](#-개발-스택)
+> - [⚙️ 기술 스택](#-기술-스택)
 > - [🌟 Questine이란?](#-questine이란)
 > - [🧩 서비스 주요 기능](#-서비스-주요-기능)
 > - [🔧 FE 핵심 개발 영역](#-fe-핵심-개발-영역)
@@ -34,7 +34,6 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![React Query](https://img.shields.io/badge/React%20Query-FF4154?style=flat-square&logo=reactquery&logoColor=white)
 ![Axios](https://img.shields.io/badge/Axios-5A29E4?style=flat-square&logo=axios&logoColor=white)
-![Zustand](https://img.shields.io/badge/Zustand-000000?style=flat-square&logo=Zustand&logoColor=white)
 ![React Hook Form](https://img.shields.io/badge/React%20Hook%20Form-EC5990?style=flat-square&logo=reacthookform&logoColor=white)
 
 ## ERD
@@ -53,7 +52,8 @@
       <img width="300" src="https://github.com/user-attachments/assets/2cfdc55e-00d2-441a-a022-56834104b1df" />
     </td>
     <td>
-      <b>할 일</b> - 할 일 추가 및 삭제를 할 수 있습니다. <br/>
+      할 일 추가 및 삭제를 할 수 있습니다. <br/>
+      완료한 할 일 개수에 따라 그라데이션 색상이 적용됩니다. <br/>
       </td>
   </tr>
 </table>
@@ -66,12 +66,13 @@
       <img width="300" src="https://github.com/user-attachments/assets/e04c055c-58cb-4633-bb2d-dd7153983673" />
     </td>
     <td>
-      <b>할 일</b> - 할 일 추가 및 삭제를 할 수 있습니다. <br/>
+      할 일을 완료하면서 활성화된 업적과 비활성화된 업적을 확인할 수 있습니다.<br/>
+      재미를 위해서 아직 해금되지 않은 업적 조건은 확인할 수 없습니다.<br/>
     </td>
   </tr>
 </table>
 
-**달성률 기반 레벨업 성장**
+**캐릭터**
 
 <table>
   <tr>
@@ -79,17 +80,21 @@
       <img width="300" src="https://github.com/user-attachments/assets/f8e2692d-7b39-40d1-8326-522891509d76" />
     </td>
     <td>
-      <b>할 일</b> - 할 일 추가 및 삭제를 할 수 있습니다. <br/>
+      <b>레벨</b> - 완료한 할 일 개수에 따라 경험치를 올릴 수 있습니다.<br/>
+      <b>이미지</b> - 레벨에 따라 다양한 이미지를 제공합니다.<br/>
     </td>
   </tr>
 </table>
+
+**랭킹**
+
 <table>
   <tr>
     <td max-width="500">
       <img width="300" src="https://github.com/user-attachments/assets/d2ffe967-b448-4ab7-babd-bed4b6038c1b" />
     </td>
     <td>
-      <b>할 일</b> - 할 일 추가 및 삭제를 할 수 있습니다. <br/>
+      <b>랭킹</b> - 전체 이용자의 랭킹을 확인할 수 있습니다.<br/>
     </td>
   </tr>
 </table>
