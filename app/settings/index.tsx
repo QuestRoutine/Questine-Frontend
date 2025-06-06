@@ -23,7 +23,6 @@ export default function Settings() {
   const { logoutMutation } = useAuth();
 
   const handleLogout = () => {
-    console.log('로그아웃');
     logoutMutation.mutate();
   };
 
@@ -34,18 +33,6 @@ export default function Settings() {
       title: '계정 설정',
       icon: 'person-outline',
       route: '/settings/account',
-    },
-    {
-      id: 'display',
-      title: '화면 설정',
-      icon: 'color-palette-outline',
-      route: '/settings/display',
-    },
-    {
-      id: 'notifications',
-      title: '공지사항',
-      icon: 'notifications-outline',
-      route: '/settings/notifications',
     },
     {
       id: 'logout',
@@ -63,7 +50,7 @@ export default function Settings() {
           style={[styles.menuItem, { borderBottomColor: colors.icon + '20' }]}
           onPress={() => {
             if (item.route) {
-              router.push(item.route);
+              router.push(item.route as any);
             } else if (item.action) {
               item.action();
             }

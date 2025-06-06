@@ -151,9 +151,14 @@ export default function Profile() {
               <Text style={[styles.statLabel, { color: colors.icon }]}>최장 연속일</Text>
             </View>
             <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.text }]}>{userInfo?.longest_streak}</Text>
+              <Text style={[styles.statLabel, { color: colors.icon }]}>획득한 업적</Text>
+            </View>
+
+            {/* <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.text }]}>{STATISTICS.weeklyAvgCompletion}%</Text>
               <Text style={[styles.statLabel, { color: colors.icon }]}>주간 완료율</Text>
-            </View>
+            </View> */}
           </View>
           {/* <View style={styles.additionalStats}>
             <View style={styles.statRow}>

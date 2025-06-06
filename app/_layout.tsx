@@ -16,7 +16,7 @@ import CustomToast, { CustomToastProps } from '@/components/ui/CustomToast';
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout() {
   dayjs.extend(utc);
   dayjs.extend(timezone);
   dayjs.tz.setDefault('Asia/Seoul');
