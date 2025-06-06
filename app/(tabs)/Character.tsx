@@ -10,6 +10,7 @@ export default function CharacterScreen() {
   const isFocused = useIsFocused();
   const [characterInfo, setCharacterInfo] = useState<LevelProps | null>(null);
   const [achievements, setAchievements] = useState<AchievementProps[]>([]);
+  const [userAvgLevel, setUserAvgLevel] = useState<number>(0);
 
   useEffect(() => {
     if (!isFocused) return;
@@ -18,21 +19,22 @@ export default function CharacterScreen() {
         data: { data },
       } = await axiosInstance.get('/characters/me');
       setCharacterInfo(data);
-      console.log(characterInfo);
     };
-    fetchData();
-  }, [isFocused]);
-
-  useEffect(() => {
-    if (!isFocused) return;
     const fetchAchievements = async () => {
       const {
         data: { data },
       } = await axiosInstance.get('/achievements');
       setAchievements(data);
     };
+    const fetchUserAvgLevel = async () => {
+      const { data } = await axiosInstance.get('/characters/avg');
+      setUserAvgLevel(Math.trunc(data.avgLevel));
+    };
+    fetchData();
     fetchAchievements();
+    fetchUserAvgLevel();
   }, [isFocused]);
+
   return (
     <SafeAreaView style={[{ paddingTop: Platform.OS === 'android' ? 50 : 0 }, styles.container]}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -150,7 +152,7 @@ export default function CharacterScreen() {
               <View style={{ backgroundColor: '#e9ecef', borderRadius: 16, padding: 8, marginBottom: 6 }}>
                 <Text style={{ fontSize: 22 }}>🧑‍🤝‍🧑</Text>
               </View>
-              <Text style={{ fontSize: 13, color: '#888' }}>Lv.3</Text>
+              <Text style={{ fontSize: 13, color: '#888' }}>Lv.{userAvgLevel}</Text>
             </View>
           </View>
         </View>
