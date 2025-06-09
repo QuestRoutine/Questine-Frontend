@@ -1,4 +1,4 @@
-import { deleteAccount, getAccessToken, getMe, postLogout, postSignin, postSignup } from '@/api/auth';
+import { deleteAccount, getMe, postLogout, postSignin, postSignup } from '@/api/auth';
 import queryClient from '@/api/queryClient';
 import { removeHeader, setHeader } from '@/utils/header';
 import { deleteSecureStore, getSecureStore, setSecureStore } from '@/utils/secureStore';
@@ -93,36 +93,6 @@ function useLogout() {
   });
 }
 
-interface AccessTokenResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
-function useRefreshToken() {
-  const { isSuccess, data, isError } = useQuery<AccessTokenResponse>({
-    queryFn: getAccessToken,
-    queryKey: ['accessToken'],
-    staleTime: 1000 * 60 * 60, // 1 hour
-    refetchInterval: 1000 * 60 * 60, // 1 hour
-    refetchOnReconnect: true,
-    refetchIntervalInBackground: true,
-  });
-
-  useEffect(() => {
-    if (isSuccess) {
-      setHeader('Authorization', `Bearer ${data.accessToken}`);
-      setSecureStore('refreshToken', data.refreshToken);
-    }
-  }, [isSuccess, data]);
-  useEffect(() => {
-    if (isError) {
-      removeHeader('Authorization');
-      deleteSecureStore('refreshToken');
-    }
-  }, [isError]);
-  return { isSuccess, isError };
-}
-
 function useDeleteAccount() {
   return useMutation({
     mutationFn: deleteAccount,
@@ -153,7 +123,6 @@ function useAuth() {
   const { data: auth, isLoading: isAuthLoading } = useGetMe();
   const signupMutation = useSignup();
   const signinMutation = useSignin();
-  const refreshTokenQuery = useRefreshToken();
   const logoutMutation = useLogout();
   const deleteAccountMutation = useDeleteAccount();
 
@@ -164,7 +133,6 @@ function useAuth() {
     isAuthLoading,
     signupMutation,
     signinMutation,
-    refreshTokenQuery,
     logoutMutation,
     deleteAccountMutation,
   };
